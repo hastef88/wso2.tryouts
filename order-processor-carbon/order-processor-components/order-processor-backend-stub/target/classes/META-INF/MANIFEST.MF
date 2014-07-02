@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Export-Package: org.wso2.carbon.orderprocessor.stub
+DynamicImport-Package: *
+Built-By: hasithad
+Build-Jdk: 1.7.0_55
+Bundle-Version: 1.0
+Tool: Bnd-0.0.357
+Bundle-Name: order-processor-backend-stub
+Bnd-LastModified: 1400579215213
+Created-By: Apache Maven Bundle Plugin
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: order-processor-backend-stub
+

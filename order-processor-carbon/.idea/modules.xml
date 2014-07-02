@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/order-processor-components/order-processor-backend/order-processor-backend.iml" filepath="$PROJECT_DIR$/order-processor-components/order-processor-backend/order-processor-backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/order-processor-components/order-processor-backend-stub/order-processor-backend-stub.iml" filepath="$PROJECT_DIR$/order-processor-components/order-processor-backend-stub/order-processor-backend-stub.iml" />
+      <module fileurl="file://$PROJECT_DIR$/order-processor-carbon.iml" filepath="$PROJECT_DIR$/order-processor-carbon.iml" />
+      <module fileurl="file://$PROJECT_DIR$/order-processor-components/order-processor-components.iml" filepath="$PROJECT_DIR$/order-processor-components/order-processor-components.iml" />
+      <module fileurl="file://$PROJECT_DIR$/order-processor-features/order-processor-features.iml" filepath="$PROJECT_DIR$/order-processor-features/order-processor-features.iml" />
+      <module fileurl="file://$PROJECT_DIR$/order-processor-repository/order-processor-repository.iml" filepath="$PROJECT_DIR$/order-processor-repository/order-processor-repository.iml" />
+      <module fileurl="file://$PROJECT_DIR$/order-processor-components/order-processor-ui/order-processor-ui.iml" filepath="$PROJECT_DIR$/order-processor-components/order-processor-ui/order-processor-ui.iml" />
+      <module fileurl="file://$PROJECT_DIR$/order-processor-components/test-component/test-component.iml" filepath="$PROJECT_DIR$/order-processor-components/test-component/test-component.iml" />
+    </modules>
+  </component>
+</project>
+

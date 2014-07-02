@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>order-processor-components</artifactId>
+        <groupId>org.wso2.carbon.hasithad</groupId>
+        <version>1.0</version>
+        <relativePath>../../order-processor-components/pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>order-processor-backend</artifactId>
+    <version>2.0</version>
+    <packaging>bundle</packaging>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>2.0.1</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>${pom.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Name>${pom.artifactId}</Bundle-Name>
+                        <!--<Embed-Dependency>dependencies</Embed-Dependency>-->
+                        <Export-Package>
+                            org.wso2.carbon.orderprocessor.backend.*,
+                            !com.mongodb.*,
+                            !org.codehaus.jackson.*,
+                            !org.json.*,
+                            !org.bson.*
+                        </Export-Package>
+                        <Private-Package>
+                            com.mongodb.*,
+                            org.codehaus.jackson.*,
+                            org.json.*,
+                            org.bson.*
+                        </Private-Package>
+                        <!--<Include-Resource>src/main/resources/mongodb.properties</Include-Resource>-->
+                        <Import-Package></Import-Package>
+                        <DynamicImport-Package>*</DynamicImport-Package>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <!-- -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-json-org</artifactId>
+            <version>2.3.3</version>
+        </dependency>
+        <!-- mongodb -->
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+            <version>2.11.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+            <version>1.9.13</version>
+        </dependency>
+    </dependencies>
+
+</project>

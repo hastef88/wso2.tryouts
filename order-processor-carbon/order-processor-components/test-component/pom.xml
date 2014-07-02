@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>order-processor-components</artifactId>
+        <groupId>org.wso2.carbon.hasithad</groupId>
+        <version>1.0</version>
+        <relativePath>../../order-processor-components/pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <version>3.0</version>
+
+    <artifactId>test-component</artifactId>
+
+    <packaging>bundle</packaging>
+    <name>WSO2 Carbon - Student Manager Server Component</name>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>${pom.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Name>${pom.artifactId}</Bundle-Name>
+                        <Export-Package>!org.codehaus.*,test.*</Export-Package>
+                        <Private-Package>org.codehaus.jackson.*</Private-Package>
+                        <!--<Embed-Dependency>dependencies</Embed-Dependency>-->
+                        <!--<Import-Package>!org.codehaus.jackson.map</Import-Package>-->
+                        <Import-Package></Import-Package>
+                        <DynamicImport-Package>*</DynamicImport-Package>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+            <version>1.9.13</version>
+        </dependency>
+    </dependencies>
+
+</project>

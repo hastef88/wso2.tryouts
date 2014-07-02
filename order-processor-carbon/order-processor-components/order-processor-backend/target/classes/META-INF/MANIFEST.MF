@@ -1,0 +1,24 @@
+Manifest-Version: 1.0
+Export-Package: org.wso2.carbon.orderprocessor.backend.model,org.wso2.
+ carbon.orderprocessor.backend.dao;uses:="org.wso2.carbon.orderprocess
+ or.backend.model,org.wso2.carbon.orderprocessor.backend.dao.impl",org
+ .wso2.carbon.orderprocessor.backend.services;uses:="org.wso2.carbon.o
+ rderprocessor.backend.model,org.wso2.carbon.orderprocessor.backend.da
+ o,org.wso2.carbon.orderprocessor.backend.enumerations,org.wso2.carbon
+ .orderprocessor.backend.util",org.wso2.carbon.orderprocessor.backend.
+ util;uses:="org.wso2.carbon.orderprocessor.backend.enumerations",org.
+ wso2.carbon.orderprocessor.backend.enumerations,org.wso2.carbon.order
+ processor.backend.dao.impl;uses:="org.wso2.carbon.orderprocessor.back
+ end.dao,org.wso2.carbon.orderprocessor.backend.model,org.wso2.carbon.
+ orderprocessor.backend.util"
+DynamicImport-Package: *
+Built-By: hasithad
+Build-Jdk: 1.7.0_55
+Bundle-Version: 2.0
+Tool: Bnd-0.0.357
+Bundle-Name: order-processor-backend
+Bnd-LastModified: 1400579380858
+Created-By: Apache Maven Bundle Plugin
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: order-processor-backend
+
