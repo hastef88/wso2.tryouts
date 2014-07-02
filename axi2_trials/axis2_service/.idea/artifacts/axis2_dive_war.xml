@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="axis2_dive:war">
+    <output-path>$PROJECT_DIR$/target</output-path>
+    <root id="archive" name="axis2_dive.war">
+      <element id="artifact" artifact-name="axis2_dive:war exploded" />
+    </root>
+  </artifact>
+</component>

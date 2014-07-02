@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<serviceGroup>
+
+   <service name="OrderProcessingService">
+        <parameter name="ServiceClass">services.OrderProcessingService</parameter>-
+        <operation name="addProducts">
+            <messageReceiver class="org.apache.axis2.rpc.receivers.RPCMessageReceiver"/>
+        </operation>
+       <operation name="create">
+           <messageReceiver class="org.apache.axis2.rpc.receivers.RPCMessageReceiver"/>
+       </operation>
+       <operation name="get">
+           <messageReceiver class="org.apache.axis2.rpc.receivers.RPCMessageReceiver"/>
+       </operation>
+       <operation name="update">
+           <messageReceiver class="org.apache.axis2.rpc.receivers.RPCMessageReceiver"/>
+       </operation>
+       <operation name="list">
+           <messageReceiver class="org.apache.axis2.rpc.receivers.RPCMessageReceiver"/>
+       </operation>
+        <!--    <module ref="counterModule"/>  -->
+   </service>
+
+   <service name="ProductService">
+       <parameter name="ServiceClass">services.ProductService</parameter>
+       <operation name="update">
+           <messageReceiver class="org.apache.axis2.rpc.receivers.RPCMessageReceiver"/>
+       </operation>
+       <operation name="get">
+           <messageReceiver class="org.apache.axis2.rpc.receivers.RPCMessageReceiver"/>
+       </operation>
+       <operation name="create">
+           <messageReceiver class="org.apache.axis2.rpc.receivers.RPCMessageReceiver"/>
+       </operation>
+       <operation name="list">
+           <messageReceiver class="org.apache.axis2.rpc.receivers.RPCMessageReceiver"/>
+       </operation>
+       <operation name="delete">
+           <messageReceiver class="org.apache.axis2.rpc.receivers.RPCMessageReceiver"/>
+       </operation>
+   </service>
+
+    <service name="CustomerService">
+        <parameter name="ServiceClass">services.CustomerService</parameter>
+        <operation name="update">
+            <messageReceiver class="org.apache.axis2.rpc.receivers.RPCMessageReceiver"/>
+        </operation>
+        <operation name="get">
+            <messageReceiver class="org.apache.axis2.rpc.receivers.RPCMessageReceiver"/>
+        </operation>
+        <operation name="register">
+            <messageReceiver class="org.apache.axis2.rpc.receivers.RPCMessageReceiver"/>
+        </operation>
+        <operation name="delete">
+            <messageReceiver class="org.apache.axis2.rpc.receivers.RPCMessageReceiver"/>
+        </operation>
+    </service>
+
+</serviceGroup>
