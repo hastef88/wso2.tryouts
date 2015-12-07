@@ -1,0 +1,36 @@
+Manifest-Version: 1.0
+Export-Package: org.wso2.mediators.custom;uses:="org.apache.axis2.addr
+ essing,org.apache.commons.logging,javax.jms,javax.xml.namespace,org.a
+ pache.axiom.om,org.apache.axiom.soap,org.apache.synapse,org.apache.ax
+ is2.util,org.apache.axis2.transport.base,org.apache.axis2,org.apache.
+ commons.io.output,javax.naming,org.apache.axis2.transport,org.apache.
+ axis2.transport.jms,org.apache.synapse.core.axis2,org.apache.axis2.cl
+ ient,org.apache.axis2.context,javax.activation,javax.cache.event,org.
+ apache.axis2.transport.jms.iowrappers,javax.transaction,javax.cache,o
+ rg.apache.synapse.mediators"
+Built-By: hasithad
+Build-Jdk: 1.7.0_60
+Bundle-Version: 1.0.0.SNAPSHOT
+Tool: Bnd-0.0.238
+Bundle-Name: org.wso2.mediators.custom
+Bnd-LastModified: 1449482425254
+Created-By: Apache Maven Bundle Plugin
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: org.wso2.mediators.custom
+Import-Package: javax.activation;resolution:=optional;version="1.1",ja
+ vax.cache;resolution:=optional,javax.cache.event;resolution:=optional
+ ,javax.jms;resolution:=optional,javax.naming;resolution:=optional,jav
+ ax.transaction;resolution:=optional,javax.xml.namespace;resolution:=o
+ ptional,org.apache.axiom.om;resolution:=optional,org.apache.axiom.soa
+ p;resolution:=optional,org.apache.axis2;resolution:=optional,org.apac
+ he.axis2.addressing;resolution:=optional,org.apache.axis2.client;reso
+ lution:=optional,org.apache.axis2.context;resolution:=optional,org.ap
+ ache.axis2.transport;resolution:=optional,org.apache.axis2.transport.
+ base;resolution:=optional,org.apache.axis2.transport.jms;resolution:=
+ optional,org.apache.axis2.transport.jms.iowrappers;resolution:=option
+ al,org.apache.axis2.util;resolution:=optional,org.apache.commons.io.o
+ utput;resolution:=optional;version="2.0",org.apache.commons.logging;r
+ esolution:=optional,org.apache.synapse;resolution:=optional,org.apach
+ e.synapse.core.axis2;resolution:=optional,org.apache.synapse.mediator
+ s;resolution:=optional,org.wso2.mediators.custom;resolution:=optional
+
