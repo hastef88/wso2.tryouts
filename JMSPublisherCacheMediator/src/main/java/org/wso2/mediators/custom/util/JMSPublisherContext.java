@@ -1,4 +1,21 @@
-package org.wso2.mediators.custom;
+/*
+ * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+package org.wso2.mediators.custom.util;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.OMNode;
@@ -37,55 +54,51 @@ import javax.naming.NamingException;
 import javax.transaction.UserTransaction;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Properties;
 
-public class JMSTopicContext {
+public class JMSPublisherContext {
 
-    private static final Log log = LogFactory.getLog(JMSTopicContext.class);
+    private static final Log log = LogFactory.getLog(JMSPublisherContext.class);
+
+    public static final String QPID_ICF = "org.wso2.andes.jndi.PropertiesFileInitialContextFactory";
+    public static final String TOPIC_NAME_PREFIX = "topic.";
 
     private static final String JNDI_FILE_PATH = System.getProperty(ServerConstants.CARBON_HOME) + File.separator +
             "repository" + File.separator + "conf" + File.separator + "jndi.properties";
 
-    public static InitialContext initialJMSContext;
-    public static TopicConnectionFactory topicConnectionFactory;
+    public static Properties jndiProperties;
 
+    private TopicConnectionFactory topicConnectionFactory;
     private TopicConnection topicConnection;
     private TopicSession topicSession;
     private MessageProducer messageProducer;
-
     private String topicName;
 
-    private static void initializeStaticContext(String topicName, String connectionFactoryName) throws NamingException, IOException {
+    private static void initializeJNDIProperties() throws NamingException, IOException {
 
-        Properties jndiProperties = new Properties();
-
+        jndiProperties = new Properties();
         jndiProperties.load(new FileInputStream(JNDI_FILE_PATH));
+        jndiProperties.put(Context.INITIAL_CONTEXT_FACTORY, QPID_ICF);
 
-        jndiProperties.put(Context.INITIAL_CONTEXT_FACTORY, ConfigurationManager.QPID_ICF);
-        jndiProperties.put(ConfigurationManager.CF_NAME_PREFIX + ConfigurationManager.CF_NAME, ConfigurationManager.getTCPConnectionURL());
-        jndiProperties.put(ConfigurationManager.TOPIC_NAME_PREFIX + topicName, topicName);
-
-        initialJMSContext = new InitialContext(jndiProperties);
-
-        if (null == topicConnectionFactory) {
-            topicConnectionFactory = (TopicConnectionFactory) initialJMSContext.lookup(ConfigurationManager.CF_NAME);
-        }
     }
 
-    public JMSTopicContext(String topicName, String connectionFactoryName) throws NamingException, JMSException, IOException {
+    public JMSPublisherContext(String topicName, String connectionFactoryName) throws NamingException, JMSException, IOException {
 
-        if (null == initialJMSContext) {
-            JMSTopicContext.initializeStaticContext(topicName, connectionFactoryName);
+        if (null == jndiProperties) {
+            JMSPublisherContext.initializeJNDIProperties();
         }
 
-        if (!initialJMSContext.getEnvironment().containsKey(ConfigurationManager.TOPIC_NAME_PREFIX + topicName)) {
-            initialJMSContext.addToEnvironment(ConfigurationManager.TOPIC_NAME_PREFIX + topicName, topicName);
+        if (!jndiProperties.containsKey(TOPIC_NAME_PREFIX + topicName)) {
+            log.warn("Topic not defined in default jndi.properties !");
+            jndiProperties.put(TOPIC_NAME_PREFIX + topicName, topicName);
         }
+
+        InitialContext initialJMSContext = new InitialContext(jndiProperties);
+        topicConnectionFactory = (TopicConnectionFactory) initialJMSContext.lookup(connectionFactoryName);
 
         topicConnection = topicConnectionFactory.createTopicConnection();
         topicSession = topicConnection.createTopicSession(false,TopicSession.AUTO_ACKNOWLEDGE);
@@ -452,6 +465,15 @@ public class JMSTopicContext {
         if (null != topicConnection) {
             topicConnection.close();
         }
+        if (null != topicConnectionFactory) {
+            topicConnectionFactory = null;
+        }
+    }
 
+    @Override
+    protected void finalize() throws Throwable {
+        log.info("Entry going away !!");
+        close();
+        super.finalize();
     }
 }
