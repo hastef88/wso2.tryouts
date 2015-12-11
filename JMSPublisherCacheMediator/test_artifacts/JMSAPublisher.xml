@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<proxy xmlns="http://ws.apache.org/ns/synapse"
+       name="JMSAPublisher"
+       transports="https http"
+       startOnLoad="true"
+       trace="disable">
+   <description/>
+   <target>
+      <inSequence>
+         <property name="OUT_ONLY" value="true"/>
+         <property name="FORCE_SC_ACCEPTED" value="true" scope="axis2"/>
+         <iterate xmlns:xsd="http://services.samples/xsd"
+                  xmlns:soapenv="http://www.w3.org/2003/05/soap-envelope"
+                  xmlns:ser="http://services.samples"
+                  id="msgIterator"
+                  expression="//xsd:symbol">
+            <target>
+               <sequence>
+                  <property name="topicName"
+                            expression="//xsd:symbol"
+                            scope="default"
+                            type="STRING"
+                            description="GET STORE ID AKA TOPIC NAME"/>
+                  <log level="custom" description="LOG STORE ID">
+                     <property name="topicNameOfStore" expression="get-property('topicName')"/>
+                  </log>
+                  <class name="org.wso2.mediators.custom.JMSPublisherCacheMediator">
+                     <property name="connectionFactoryName" value="TopicConnectionFactory"/>
+		     <property name="cacheExpirationInterval" value="3600"/>
+                  </class>
+               </sequence>
+            </target>
+         </iterate>
+      </inSequence>
+      <outSequence>
+         <send/>
+      </outSequence>
+   </target>
+</proxy>

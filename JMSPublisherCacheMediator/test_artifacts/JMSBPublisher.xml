@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<proxy xmlns="http://ws.apache.org/ns/synapse"
+       name="JMSBPublisher"
+       transports="https http"
+       startOnLoad="true"
+       trace="disable">
+   <description/>
+   <target>
+      <inSequence>
+         <property name="OUT_ONLY" value="true"/>
+         <property name="FORCE_SC_ACCEPTED" value="true" scope="axis2"/>
+         <iterate xmlns:xsd="http://services.samples/xsd"
+                  xmlns:soapenv="http://www.w3.org/2003/05/soap-envelope"
+                  xmlns:ser="http://services.samples"
+                  id="msgIterator"
+                  expression="//xsd:symbol">
+            <target>
+               <sequence>
+                  <property name="topicName"
+                            expression="//xsd:symbol"
+                            scope="default"
+                            type="STRING"
+                            description="GET STORE ID AKA TOPIC NAME"/>
+                  <log level="custom" description="LOG STORE ID">
+                     <property name="topicNameOfStore" expression="get-property('topicName')"/>
+                  </log>
+                  <header name="To"
+                          scope="default"
+                          expression="fn:concat('jms:/', get-property('topicName'),'?transport.jms.ConnectionFactoryJNDIName=TopicConnectionFactory&amp;java.naming.factory.initial=org.wso2.andes.jndi.PropertiesFileInitialContextFactory&amp;java.naming.provider.url=repository/conf/jndi.properties&amp;transport.jms.DestinationType=topic&amp;transport.jms.CacheLevel=producer')"/>
+                  <send>
+                     <endpoint key="defaultEndpoint"/>
+                  </send>
+               </sequence>
+            </target>
+         </iterate>
+      </inSequence>
+      <outSequence>
+         <send/>
+      </outSequence>
+   </target>
+</proxy>

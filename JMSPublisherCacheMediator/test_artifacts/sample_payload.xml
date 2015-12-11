@@ -1,0 +1,12 @@
+<soapenv:Envelope xmlns:soapenv="http://www.w3.org/2003/05/soap-envelope" xmlns:ser="http://services.samples" xmlns:xsd="http://services.samples/xsd">
+    <soapenv:Header/>
+    <soapenv:Body>
+       <ser:getQuote>
+          <!--Optional:-->
+          <ser:request>
+             <!--Optional:-->
+             <xsd:symbol>MyTopicB</xsd:symbol>
+          </ser:request>
+       </ser:getQuote>
+    </soapenv:Body>
+ </soapenv:Envelope>
