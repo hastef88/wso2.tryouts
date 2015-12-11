@@ -16,7 +16,8 @@ This custom mediator enables re-use of JMS sessions specifically for JMS topics 
 
 You can use the mediator within a proxy as follows : 
 
-`<?xml version="1.0" encoding="UTF-8"?>
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
 <proxy xmlns="http://ws.apache.org/ns/synapse"
        name="JMSAPublisher"
        transports="https http"
@@ -54,7 +55,8 @@ You can use the mediator within a proxy as follows :
          <send/>
       </outSequence>
    </target>
-</proxy>`
+</proxy>
+```
 
 In the above configuration, the "connectionFactoryName" property points to the connectionFactory chosen to publish to topics from the ESB_HOME/repository/conf/jndi.properties file. And the "cacheExpirationInterval" points to the interval at which the cached JMS sessions would expire (in seconds).
 
