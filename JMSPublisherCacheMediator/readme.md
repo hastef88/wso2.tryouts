@@ -1,6 +1,6 @@
-# JMS Publisher Cache Mediator for WSO2 ESB + WSO2 MB integration with JMS Topics
+## JMS Publisher Cache Mediator for WSO2 ESB + WSO2 MB integration with JMS Topics
 
-## Purpose
+### Purpose
 
 The default JMS transport in WSO2 ESB 4.8.1 does not support re-use of JMS sessions when publishing to the same destination multiple times. In the perspective of the message broker, this involves creation/disconnection of JMS sessions per each published message, introducing an unnecessary performance and memory overhead. 
 
@@ -8,7 +8,7 @@ There is a workaround to enable caching the session by configuring the ESB as pe
 
 This custom mediator enables re-use of JMS sessions specifically for JMS topics that are not known beforehand (in a use case where the topic name is inferred based on user's input). Test results of the 3 approaches in comparison can be found at [2]. In summary, re-using the JMS sessions proved to have about a 3-fold performance improvement as per the tests.  
 
-## Usage
+### Usage
 
 1. Build the source using "mvn clean install". 
 2. Copy the "target/JMSPublisherCacheMediator-1.0-SNAPSHOT.jar" into "ESB_HOME/repository/components/dropins" directory.
