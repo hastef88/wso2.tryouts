@@ -53,8 +53,8 @@ public class JMSPublisherCache {
     /**
      * Listener to handle removal/expiration of a cached entry
      */
-    private final static JMSPublisherContextCacheRemovedListener<String, JMSPublisherContext> entryRemovedListener = new
-            JMSPublisherContextCacheRemovedListener<>();
+    private final static JMSPublisherContextCacheExpiredListener<String, JMSPublisherContext> entryExpiredListener = new
+            JMSPublisherContextCacheExpiredListener<>();
 
     /**
      * Get the cache which holds all sessions created for publishing to topics using this mediator.
@@ -69,13 +69,16 @@ public class JMSPublisherCache {
             CacheManager cacheManager = Caching.getCacheManagerFactory().getCacheManager(CACHE_MANAGER_KEY);
             isCacheInitialized.getAndSet(true);
 
-            return cacheManager.<String, JMSPublisherContext>createCacheBuilder(CACHE_KEY)
+            Cache<String, JMSPublisherContext> cache = cacheManager.<String, JMSPublisherContext>createCacheBuilder(CACHE_KEY)
                     .setExpiry(CacheConfiguration.ExpiryType.MODIFIED,
                             new CacheConfiguration.Duration(TimeUnit.SECONDS, cacheExpirationInterval))
                     .setExpiry(CacheConfiguration.ExpiryType.ACCESSED,
                             new CacheConfiguration.Duration(TimeUnit.SECONDS, cacheExpirationInterval))
-                    //.registerCacheEntryListener(entryRemovedListener)
                     .setStoreByValue(false).build();
+
+            cache.registerCacheEntryListener(entryExpiredListener);
+
+            return cache;
         }
     }
 

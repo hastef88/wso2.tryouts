@@ -20,8 +20,8 @@ package org.wso2.mediators.custom.util;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import javax.cache.event.CacheEntryEvent;
+import javax.cache.event.CacheEntryExpiredListener;
 import javax.cache.event.CacheEntryListenerException;
-import javax.cache.event.CacheEntryRemovedListener;
 import javax.jms.JMSException;
 
 /**
@@ -29,13 +29,12 @@ import javax.jms.JMSException;
  * @param <K> Key of cache
  * @param <V> Value of cache
  */
-public class JMSPublisherContextCacheRemovedListener<K,V> implements CacheEntryRemovedListener<K, V>{
+public class JMSPublisherContextCacheExpiredListener<K,V> implements CacheEntryExpiredListener<K, V> {
 
-    private static final Log log = LogFactory.getLog(JMSPublisherContextCacheRemovedListener.class);
+    private static final Log log = LogFactory.getLog(JMSPublisherContextCacheExpiredListener.class);
 
     @Override
-    public void entryRemoved(CacheEntryEvent<? extends K, ? extends V> cacheEntryEvent) throws CacheEntryListenerException {
-
+    public void entryExpired(CacheEntryEvent<? extends K, ? extends V> cacheEntryEvent) throws CacheEntryListenerException {
         log.info("Clearing Cache for key : " + cacheEntryEvent.getKey());
 
         if (cacheEntryEvent.getValue() instanceof JMSPublisherContext) {
