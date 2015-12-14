@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Class to act as a single reference point for the Cache containing JMS Topic Sessions used in the class mediator
+ *
  * @link org.wso2.mediators.custom.JMSPublisherCacheMediator.
  */
 public class JMSPublisherCache {
@@ -80,29 +81,6 @@ public class JMSPublisherCache {
 
             return cache;
         }
-    }
-
-    public static Cache<String, String> getTestCache() {
-
-        if (isCacheInitialized.get()) {
-            return Caching.getCacheManagerFactory().getCacheManager(CACHE_MANAGER_KEY).getCache(CACHE_KEY);
-        } else {
-            CacheManager cacheManager =
-                    Caching.getCacheManagerFactory().getCacheManager(CACHE_MANAGER_KEY);
-            isCacheInitialized.getAndSet(true);
-
-            return cacheManager.<String, String>createCacheBuilder(CACHE_KEY)
-                    .setExpiry(CacheConfiguration.ExpiryType.MODIFIED,
-                            new CacheConfiguration.Duration(TimeUnit.SECONDS, cacheExpirationInterval))
-                    .setExpiry(CacheConfiguration.ExpiryType.ACCESSED,
-                            new CacheConfiguration.Duration(TimeUnit.SECONDS, cacheExpirationInterval))
-                    .setStoreByValue(false).build();
-        }
-    }
-
-
-    public static int getCacheExpirationInterval() {
-        return cacheExpirationInterval;
     }
 
     public static void setCacheExpirationInterval(int cacheExpirationInterval) {

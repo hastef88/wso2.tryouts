@@ -60,24 +60,66 @@ import java.io.StringWriter;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Properties;
 
+/**
+ * This class maintains all the JMS sessions and connections required to publish a message to a single topic.
+ * Certain methods from the ESB JMS transport itself have been re-used here with minor modifications.
+ */
 public class JMSPublisherContext {
 
     private static final Log log = LogFactory.getLog(JMSPublisherContext.class);
 
+    /**
+     * Connection Factory type specific to WSO2 MB
+     */
     public static final String QPID_ICF = "org.wso2.andes.jndi.PropertiesFileInitialContextFactory";
+
+    /**
+     * JNDI Prefix for topics.
+     */
     public static final String TOPIC_NAME_PREFIX = "topic.";
 
+    /**
+     * File path to the jndi.properties file used in WSO2 ESB.
+     */
     private static final String JNDI_FILE_PATH = System.getProperty(ServerConstants.CARBON_HOME) + File.separator +
             "repository" + File.separator + "conf" + File.separator + "jndi.properties";
 
+    /**
+     * Properties read from the above file.
+     */
     public static Properties jndiProperties;
 
+    /**
+     * JMS Connection Factory used to publish to the topic.
+     */
     private TopicConnectionFactory topicConnectionFactory;
+
+    /**
+     * Network connection used to communicate with WSO2 MB.
+     */
     private TopicConnection topicConnection;
+
+    /**
+     * JMS Session used to communicate with WSO2 MB.
+     */
     private TopicSession topicSession;
+
+    /**
+     * Message Producer used within the above JMS session.
+     */
     private MessageProducer messageProducer;
+
+    /**
+     * Name of topic.
+     */
     private String topicName;
 
+    /**
+     * Reads the property file into memory as an initial context for the JMS communication within the mediator.
+     *
+     * @throws NamingException
+     * @throws IOException
+     */
     private static void initializeJNDIProperties() throws NamingException, IOException {
 
         jndiProperties = new Properties();
@@ -86,6 +128,15 @@ public class JMSPublisherContext {
 
     }
 
+    /**
+     * Initialize the JMSPublisherContext for a specific topicName planning to use a pre-defined JMS connection factory.
+     *
+     * @param topicName             Name of topic
+     * @param connectionFactoryName Name of JMS connection factory as defined in jndi.properties file.
+     * @throws NamingException
+     * @throws JMSException
+     * @throws IOException
+     */
     public JMSPublisherContext(String topicName, String connectionFactoryName) throws NamingException, JMSException, IOException {
 
         if (null == jndiProperties) {
@@ -101,7 +152,7 @@ public class JMSPublisherContext {
         topicConnectionFactory = (TopicConnectionFactory) initialJMSContext.lookup(connectionFactoryName);
 
         topicConnection = topicConnectionFactory.createTopicConnection();
-        topicSession = topicConnection.createTopicSession(false,TopicSession.AUTO_ACKNOWLEDGE);
+        topicSession = topicConnection.createTopicSession(false, TopicSession.AUTO_ACKNOWLEDGE);
 
         Topic topic = (Topic) initialJMSContext.lookup(topicName);
 
@@ -111,13 +162,21 @@ public class JMSPublisherContext {
         log.info("Initialized Session for Topic : " + topicName);
     }
 
+    /**
+     * Method exposed to publish a message using this JMS context (session, connection).
+     *
+     * @param messageContext      synapse message context
+     * @param contentTypeProperty content type of the message.
+     * @throws AxisFault
+     * @throws JMSException
+     */
     public void publishMessage(MessageContext messageContext, String contentTypeProperty) throws AxisFault, JMSException {
 
         if (null != topicSession && null != messageProducer) {
-            Message messageToPublish = createJMSMessage(messageContext,contentTypeProperty);
+            Message messageToPublish = createJMSMessage(messageContext, contentTypeProperty);
 
             synchronized (this.topicSession) {
-                send(messageToPublish,messageContext);
+                send(messageToPublish, messageContext);
             }
         }
     }
@@ -126,11 +185,11 @@ public class JMSPublisherContext {
      * Create a JMS Message from the given MessageContext and using the given
      * session
      *
-     * @param msgContext the MessageContext
+     * @param msgContext          the MessageContext
      * @param contentTypeProperty the message property to be used to store the
      *                            content type
      * @return a JMS message from the context and session
-     * @throws JMSException on exception
+     * @throws JMSException               on exception
      * @throws org.apache.axis2.AxisFault on exception
      */
     private Message createJMSMessage(MessageContext msgContext,
@@ -219,10 +278,10 @@ public class JMSPublisherContext {
             TextMessage txtMsg = (TextMessage) message;
             txtMsg.setText(msgContext.getEnvelope().getBody().
                     getFirstChildWithName(BaseConstants.DEFAULT_TEXT_WRAPPER).getText());
-        } else if (JMSConstants.JMS_MAP_MESSAGE.equalsIgnoreCase(jmsPayloadType)){
+        } else if (JMSConstants.JMS_MAP_MESSAGE.equalsIgnoreCase(jmsPayloadType)) {
             message = topicSession.createMapMessage();
             JMSUtils.convertXMLtoJMSMap(msgContext.getEnvelope().getBody().getFirstChildWithName(
-                    JMSConstants.JMS_MAP_QNAME),(MapMessage)message);
+                    JMSConstants.JMS_MAP_QNAME), (MapMessage) message);
         }
 
         // set the JMS correlation ID if specified
@@ -253,6 +312,7 @@ public class JMSPublisherContext {
 
     /**
      * Guess the message type to use for JMS looking at the message contexts' envelope
+     *
      * @param msgContext the message context
      * @return JMSConstants.JMS_BYTE_MESSAGE or JMSConstants.JMS_TEXT_MESSAGE or null
      */
@@ -263,13 +323,20 @@ public class JMSPublisherContext {
                 return JMSConstants.JMS_BYTE_MESSAGE;
             } else if (BaseConstants.DEFAULT_TEXT_WRAPPER.equals(firstChild.getQName())) {
                 return JMSConstants.JMS_TEXT_MESSAGE;
-            } else if (JMSConstants.JMS_MAP_QNAME.equals(firstChild.getQName())){
-                return  JMSConstants.JMS_MAP_MESSAGE;
+            } else if (JMSConstants.JMS_MAP_QNAME.equals(firstChild.getQName())) {
+                return JMSConstants.JMS_MAP_MESSAGE;
             }
         }
         return null;
     }
 
+    /**
+     * Set a property within the input message context (axis2/synapse).
+     *
+     * @param message JMS Message
+     * @param msgCtx  Message context
+     * @param key     key for the property
+     */
     private static void setProperty(Message message, MessageContext msgCtx, String key) {
 
         String value = getProperty(msgCtx, key);
@@ -282,15 +349,36 @@ public class JMSPublisherContext {
         }
     }
 
+    /**
+     * Utility method to direct any exceptions to the ESB mediation engine.
+     *
+     * @param msg description of error
+     * @param e   Exception
+     * @throws AxisFault
+     */
     private static void handleException(String msg, Exception e) throws AxisFault {
         log.error(msg, e);
         throw new AxisFault(msg, e);
     }
 
+    /**
+     * Read a property from the synapse message context.
+     *
+     * @param mc  message context
+     * @param key key
+     * @return Value of property
+     */
     private static String getProperty(MessageContext mc, String key) {
         return (String) mc.getProperty(key);
     }
 
+    /**
+     * Read an integer property from the message context.
+     *
+     * @param msgCtx message context
+     * @param name   key of property
+     * @return value of property
+     */
     private static Integer getIntegerProperty(MessageContext msgCtx, String name) {
         Object o = msgCtx.getProperty(name);
         if (o != null) {
@@ -307,15 +395,15 @@ public class JMSPublisherContext {
      * Perform actual send of JMS message to the Destination selected
      *
      * @param message the JMS message
-     * @param msgCtx the Axis2 MessageContext
+     * @param msgCtx  the Axis2 MessageContext
      */
     private void send(Message message, MessageContext msgCtx) throws AxisFault {
 
-        Boolean jtaCommit    = getBooleanProperty(msgCtx, BaseConstants.JTA_COMMIT_AFTER_SEND);
+        Boolean jtaCommit = getBooleanProperty(msgCtx, BaseConstants.JTA_COMMIT_AFTER_SEND);
         Boolean rollbackOnly = getBooleanProperty(msgCtx, BaseConstants.SET_ROLLBACK_ONLY);
-        Boolean persistent   = getBooleanProperty(msgCtx, JMSConstants.JMS_DELIVERY_MODE);
-        Integer priority     = getIntegerProperty(msgCtx, JMSConstants.JMS_PRIORITY);
-        Integer timeToLive   = getIntegerProperty(msgCtx, JMSConstants.JMS_TIME_TO_LIVE);
+        Boolean persistent = getBooleanProperty(msgCtx, JMSConstants.JMS_DELIVERY_MODE);
+        Integer priority = getIntegerProperty(msgCtx, JMSConstants.JMS_PRIORITY);
+        Integer timeToLive = getIntegerProperty(msgCtx, JMSConstants.JMS_TIME_TO_LIVE);
 
         // Do not commit, if message is marked for rollback
         if (rollbackOnly != null && rollbackOnly) {
@@ -348,8 +436,8 @@ public class JMSPublisherContext {
         // perform actual message sending
         try {
 //            if (jmsSpec11 || isQueue == null) {
-                messageProducer.send(message);
-                log.info("Published message to topic : " + topicName);
+            messageProducer.send(message);
+            log.info("Published message to topic : " + topicName);
 
 //            } else {
 //                if (isQueue) {
@@ -377,7 +465,8 @@ public class JMSPublisherContext {
                 if (msgId != null) {
                     msgCtx.setProperty(JMSConstants.JMS_MESSAGE_ID, msgId);
                 }
-            } catch (JMSException ignore) {}
+            } catch (JMSException ignore) {
+            }
 
             sendingSuccessful = true;
 
@@ -389,7 +478,7 @@ public class JMSPublisherContext {
 
         } catch (JMSException e) {
             handleException("Error sending message with MessageContext ID : " +
-                    msgCtx.getMessageID() + " to destination : " + topicName , e);
+                    msgCtx.getMessageID() + " to destination : " + topicName, e);
 
         } finally {
 
@@ -442,6 +531,13 @@ public class JMSPublisherContext {
         }
     }
 
+    /**
+     * Read a boolean property from the message context
+     *
+     * @param msgCtx message context
+     * @param name   key of property
+     * @return value of property
+     */
     private static Boolean getBooleanProperty(MessageContext msgCtx, String name) {
         Object o = msgCtx.getProperty(name);
         if (o != null) {
@@ -454,6 +550,12 @@ public class JMSPublisherContext {
         return null;
     }
 
+    /**
+     * Method to properly shutdown the JMS sessions and connections in the proper order. This is normally called when a cached
+     * JMSPublisherContext expires.
+     *
+     * @throws JMSException
+     */
     public void close() throws JMSException {
 
         if (null != messageProducer) {
@@ -471,8 +573,10 @@ public class JMSPublisherContext {
     }
 
     @Override
+    /**
+     * In case cache expiry does not happen, the GC collection should trigger the shutdown of the context.
+     */
     protected void finalize() throws Throwable {
-        log.info("Entry going away !!");
         close();
         super.finalize();
     }

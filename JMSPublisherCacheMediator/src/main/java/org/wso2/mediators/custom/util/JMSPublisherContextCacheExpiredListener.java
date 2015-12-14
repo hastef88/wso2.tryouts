@@ -19,6 +19,7 @@ package org.wso2.mediators.custom.util;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import javax.cache.event.CacheEntryEvent;
 import javax.cache.event.CacheEntryExpiredListener;
 import javax.cache.event.CacheEntryListenerException;
@@ -26,26 +27,26 @@ import javax.jms.JMSException;
 
 /**
  * Event handler to properly clean up the JMS Publisher context during a cache entry removal / expiration.
+ *
  * @param <K> Key of cache
  * @param <V> Value of cache
  */
-public class JMSPublisherContextCacheExpiredListener<K,V> implements CacheEntryExpiredListener<K, V> {
+public class JMSPublisherContextCacheExpiredListener<K, V> implements CacheEntryExpiredListener<K, V> {
 
     private static final Log log = LogFactory.getLog(JMSPublisherContextCacheExpiredListener.class);
 
     @Override
     public void entryExpired(CacheEntryEvent<? extends K, ? extends V> cacheEntryEvent) throws CacheEntryListenerException {
-        log.info("Clearing Cache for key : " + cacheEntryEvent.getKey());
 
         if (cacheEntryEvent.getValue() instanceof JMSPublisherContext) {
             try {
                 log.info("Clearing JMSPublisherContext for key : " + cacheEntryEvent.getKey());
-                ((JMSPublisherContext)cacheEntryEvent.getValue()).close();
+                ((JMSPublisherContext) cacheEntryEvent.getValue()).close();
             } catch (JMSException e) {
                 log.error("Error while clearing JMSPublisherContext for key" + cacheEntryEvent.getKey(), e);
             }
         } else {
-            log.info("Clearing Cache for key : " + cacheEntryEvent.getKey());
+            log.warn("Expired entry is not a JMSPublisherContext for key : " + cacheEntryEvent.getKey());
         }
     }
 }

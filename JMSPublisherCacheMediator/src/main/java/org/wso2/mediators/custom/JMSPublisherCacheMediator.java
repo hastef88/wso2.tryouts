@@ -62,7 +62,9 @@ public class JMSPublisherCacheMediator extends AbstractMediator {
 
         String topicName = messageContext.getProperty("topicName").toString();
 
-        log.info("Processing message for topic : " + topicName);
+        if (log.isDebugEnabled()) {
+            log.debug("Processing message for topic : " + topicName);
+        }
 
         PrivilegedCarbonContext.getCurrentContext().setTenantDomain(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME);
         PrivilegedCarbonContext.getCurrentContext().setTenantId(MultitenantConstants.SUPER_TENANT_ID);
@@ -79,7 +81,7 @@ public class JMSPublisherCacheMediator extends AbstractMediator {
             publisherContext = JMSPublisherCache.getJMSPublisherCache().get(topicName);
 
             if (null == publisherContext) {
-                log.info("publisher context cache miss for topic : " + topicName);
+                log.info("JMS Publisher context cache miss for topic : " + topicName);
                 try {
                     publisherContext = new JMSPublisherContext(topicName, this.connectionFactoryName);
                 } catch (JMSException e) {
