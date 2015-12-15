@@ -1,4 +1,0 @@
-org/wso2/mediators/custom/JMSPublisherCacheMediator.class
-org/wso2/mediators/custom/util/JMSPublisherContext.class
-org/wso2/mediators/custom/util/JMSPublisherCache.class
-org/wso2/mediators/custom/util/JMSPublisherContextCacheRemovedListener.class
