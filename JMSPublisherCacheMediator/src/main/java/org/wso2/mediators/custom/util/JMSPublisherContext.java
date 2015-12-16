@@ -435,28 +435,8 @@ public class JMSPublisherContext {
         boolean sendingSuccessful = false;
         // perform actual message sending
         try {
-//            if (jmsSpec11 || isQueue == null) {
             messageProducer.send(message);
             log.info("Published message to topic : " + topicName);
-
-//            } else {
-//                if (isQueue) {
-//                    try {
-//                        ((QueueSender) producer).send(message);
-//                    } catch (JMSException e) {
-//                        createTempQueueConsumer();
-//                        ((QueueSender) producer).send(message);
-//                    }
-//
-//                } else {
-//                    try {
-//                        ((TopicPublisher) producer).publish(message);
-//                    } catch (JMSException e) {
-//                        createTempTopicSubscriber();
-//                        ((TopicPublisher) producer).publish(message);
-//                    }
-//                }
-//            }
 
             // set the actual MessageID to the message context for use by any others down the line
             String msgId = null;

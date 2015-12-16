@@ -17,6 +17,10 @@
 
 package org.wso2.mediators.custom.util;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.caching.impl.CachingConstants;
+
 import javax.cache.Cache;
 import javax.cache.CacheConfiguration;
 import javax.cache.CacheManager;
@@ -35,6 +39,8 @@ public class JMSPublisherCache {
      * Is set to true if the global cache already initialized.
      */
     private static AtomicBoolean isCacheInitialized = new AtomicBoolean(false);
+
+    private static final Log log = LogFactory.getLog(JMSPublisherCache.class);
 
     /**
      * Cache Name
@@ -65,12 +71,20 @@ public class JMSPublisherCache {
     public static Cache<String, JMSPublisherContext> getJMSPublisherCache() {
 
         if (isCacheInitialized.get()) {
-            return Caching.getCacheManagerFactory().getCacheManager(CACHE_MANAGER_KEY).getCache(CACHE_KEY);
+            return Caching.getCacheManagerFactory().getCacheManager(CACHE_MANAGER_KEY).getCache(CachingConstants.LOCAL_CACHE_PREFIX +
+                    CACHE_KEY);
         } else {
+
+            String cacheName = CachingConstants.LOCAL_CACHE_PREFIX + CACHE_KEY;
+
+            if (log.isDebugEnabled()) {
+                log.debug("Using cacheName : " + cacheName);
+            }
+
             CacheManager cacheManager = Caching.getCacheManagerFactory().getCacheManager(CACHE_MANAGER_KEY);
             isCacheInitialized.getAndSet(true);
 
-            Cache<String, JMSPublisherContext> cache = cacheManager.<String, JMSPublisherContext>createCacheBuilder(CACHE_KEY)
+            Cache<String, JMSPublisherContext> cache = cacheManager.<String, JMSPublisherContext>createCacheBuilder(cacheName)
                     .setExpiry(CacheConfiguration.ExpiryType.MODIFIED,
                             new CacheConfiguration.Duration(TimeUnit.SECONDS, cacheExpirationInterval))
                     .setExpiry(CacheConfiguration.ExpiryType.ACCESSED,
@@ -83,6 +97,10 @@ public class JMSPublisherCache {
         }
     }
 
+    /**
+     * Set the interval at which the cached entries should expire based on last Accessed timestamp.
+     * @param cacheExpirationInterval interval at which the cached entries should expire based on last Accessed timestamp.
+     */
     public static void setCacheExpirationInterval(int cacheExpirationInterval) {
         JMSPublisherCache.cacheExpirationInterval = cacheExpirationInterval;
     }
