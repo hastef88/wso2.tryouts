@@ -97,9 +97,10 @@ public class JMSPublisherCacheMediator extends AbstractMediator {
             }
         }
 
+
         try {
             assert publisherContext != null;
-            publisherContext.publishMessage(((Axis2MessageContext) messageContext).getAxis2MessageContext(), "text/xml");
+            publisherContext.publishMessage(((Axis2MessageContext) messageContext).getAxis2MessageContext());
             return true;
 
         } catch (JMSException e) {

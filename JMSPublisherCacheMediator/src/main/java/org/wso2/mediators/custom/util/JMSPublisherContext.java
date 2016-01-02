@@ -32,6 +32,7 @@ import org.apache.axis2.transport.jms.JMSUtils;
 import org.apache.axis2.transport.jms.iowrappers.BytesMessageOutputStream;
 import org.apache.axis2.util.MessageProcessorSelector;
 import org.apache.commons.io.output.WriterOutputStream;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.utils.ServerConstants;
@@ -59,6 +60,8 @@ import java.io.OutputStream;
 import java.io.StringWriter;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Properties;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This class maintains all the JMS sessions and connections required to publish a message to a single topic.
@@ -115,6 +118,11 @@ public class JMSPublisherContext {
     private String topicName;
 
     /**
+     * Object-wise lock to synchronize publishing to the same topic.
+     */
+    private final Lock publisherLock = new ReentrantLock();
+
+    /**
      * Reads the property file into memory as an initial context for the JMS communication within the mediator.
      *
      * @throws NamingException
@@ -166,18 +174,15 @@ public class JMSPublisherContext {
      * Method exposed to publish a message using this JMS context (session, connection).
      *
      * @param messageContext      synapse message context
-     * @param contentTypeProperty content type of the message.
      * @throws AxisFault
      * @throws JMSException
      */
-    public void publishMessage(MessageContext messageContext, String contentTypeProperty) throws AxisFault, JMSException {
+    public void publishMessage(MessageContext messageContext) throws AxisFault, JMSException {
 
         if (null != topicSession && null != messageProducer) {
-            Message messageToPublish = createJMSMessage(messageContext, contentTypeProperty);
+            Message messageToPublish = createJMSMessage(messageContext);
 
-            synchronized (this.topicSession) {
-                send(messageToPublish, messageContext);
-            }
+            send(messageToPublish, messageContext);
         }
     }
 
@@ -186,14 +191,11 @@ public class JMSPublisherContext {
      * session
      *
      * @param msgContext          the MessageContext
-     * @param contentTypeProperty the message property to be used to store the
-     *                            content type
      * @return a JMS message from the context and session
      * @throws JMSException               on exception
      * @throws org.apache.axis2.AxisFault on exception
      */
-    private Message createJMSMessage(MessageContext msgContext,
-                                     String contentTypeProperty) throws JMSException, AxisFault {
+    private Message createJMSMessage(MessageContext msgContext) throws JMSException, AxisFault {
 
         Message message = null;
         String msgType = getProperty(msgContext, JMSConstants.JMS_MESSAGE_TYPE);
@@ -249,10 +251,6 @@ public class JMSPublisherContext {
                 TextMessage txtMsg = topicSession.createTextMessage();
                 txtMsg.setText(sw.toString());
                 message = txtMsg;
-            }
-
-            if (contentTypeProperty != null) {
-                message.setStringProperty(contentTypeProperty, contentType);
             }
 
         } else if (JMSConstants.JMS_BYTE_MESSAGE.equals(jmsPayloadType)) {
@@ -399,16 +397,12 @@ public class JMSPublisherContext {
      */
     private void send(Message message, MessageContext msgCtx) throws AxisFault {
 
+        publisherLock.lock();
+
         Boolean jtaCommit = getBooleanProperty(msgCtx, BaseConstants.JTA_COMMIT_AFTER_SEND);
-        Boolean rollbackOnly = getBooleanProperty(msgCtx, BaseConstants.SET_ROLLBACK_ONLY);
         Boolean persistent = getBooleanProperty(msgCtx, JMSConstants.JMS_DELIVERY_MODE);
         Integer priority = getIntegerProperty(msgCtx, JMSConstants.JMS_PRIORITY);
         Integer timeToLive = getIntegerProperty(msgCtx, JMSConstants.JMS_TIME_TO_LIVE);
-
-        // Do not commit, if message is marked for rollback
-        if (rollbackOnly != null && rollbackOnly) {
-            jtaCommit = Boolean.FALSE;
-        }
 
         if (persistent != null) {
             try {
@@ -490,7 +484,7 @@ public class JMSPublisherContext {
             } else {
                 try {
                     if (topicSession.getTransacted()) {
-                        if (sendingSuccessful && (rollbackOnly == null || !rollbackOnly)) {
+                        if (sendingSuccessful) {
                             topicSession.commit();
                         } else {
                             topicSession.rollback();
@@ -508,6 +502,8 @@ public class JMSPublisherContext {
                             msgCtx.getMessageID() + " to destination : " + topicName, e);
                 }
             }
+
+            publisherLock.unlock();
         }
     }
 
