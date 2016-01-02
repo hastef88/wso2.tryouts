@@ -62,6 +62,8 @@ In the above configuration, the "connectionFactoryName" property points to the c
 
 *Both these properties are static and cannot be changed once the server is started.
 
+*If the cacheExpirationInterval is less than the time taken to publish a single message, there is a possiblity of the JMS session being destroyed while publishing is in progress. To avoid this, always use a sensible interval for cache expiry. The wso2 carbon cache runs checks for expiration every 30 seconds, so it is ideal to maintain the cacheExpirationInterval as a value > 30).
+
 [1] : http://waruapz.blogspot.com/2014/10/jms-performance-tuning-with-wso2-esb.html
-[2] : 
+[2] : https://github.com/hastef88/wso2.tryouts/blob/master/JMSPublisherCacheMediator/test_artifacts/Performance%20comparison%20-%20JMS%20Publisher%20Caching%20vs%20Non-caching.pdf
 
