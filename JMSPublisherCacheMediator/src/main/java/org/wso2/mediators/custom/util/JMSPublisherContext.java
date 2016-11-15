@@ -32,22 +32,32 @@ import org.apache.axis2.transport.jms.JMSUtils;
 import org.apache.axis2.transport.jms.iowrappers.BytesMessageOutputStream;
 import org.apache.axis2.util.MessageProcessorSelector;
 import org.apache.commons.io.output.WriterOutputStream;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.utils.ServerConstants;
 
 import javax.activation.DataHandler;
 import javax.jms.BytesMessage;
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
 import javax.jms.DeliveryMode;
+import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.Message;
+import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
+import javax.jms.Queue;
+import javax.jms.QueueConnection;
+import javax.jms.QueueConnectionFactory;
+import javax.jms.QueueSender;
+import javax.jms.QueueSession;
+import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 import javax.jms.TopicConnection;
 import javax.jms.TopicConnectionFactory;
+import javax.jms.TopicPublisher;
 import javax.jms.TopicSession;
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -64,7 +74,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * This class maintains all the JMS sessions and connections required to publish a message to a single topic.
+ * This class maintains all the JMS sessions and connections required to publish a message to a single topic/queue.
  * Certain methods from the ESB JMS transport itself have been re-used here with minor modifications.
  */
 public class JMSPublisherContext {
@@ -74,12 +84,17 @@ public class JMSPublisherContext {
     /**
      * Connection Factory type specific to WSO2 MB
      */
-    public static final String QPID_ICF = "org.wso2.andes.jndi.PropertiesFileInitialContextFactory";
+    public static final String WSO2MB_ICF = "org.wso2.andes.jndi.PropertiesFileInitialContextFactory";
 
     /**
      * JNDI Prefix for topics.
      */
-    public static final String TOPIC_NAME_PREFIX = "topic.";
+    public static final String TOPIC_NAME_PREFIX = "topic";
+
+    /**
+     * JNDI Prefix for queues.
+     */
+    public static final String QUEUE_NAME_PREFIX = "queue";
 
     /**
      * File path to the jndi.properties file used in WSO2 ESB.
@@ -93,29 +108,44 @@ public class JMSPublisherContext {
     public static Properties jndiProperties;
 
     /**
-     * JMS Connection Factory used to publish to the topic.
+     * Name of destination.
      */
-    private TopicConnectionFactory topicConnectionFactory;
+    private String destinationName;
+
+    /**
+     * Name of connection factory.
+     */
+    private String connectionFactoryName;
+
+    /**
+     * "queue" or "topic"
+     */
+    private String destinationType;
+
+    /**
+     * JMS Destination object as lookup from JNDI context.
+     */
+    private Destination destination;
+
+    /**
+     * JMS Connection Factory used to publish to the topic/queue.
+     */
+    private ConnectionFactory connectionFactory;
 
     /**
      * Network connection used to communicate with WSO2 MB.
      */
-    private TopicConnection topicConnection;
+    private Connection connection;
 
     /**
      * JMS Session used to communicate with WSO2 MB.
      */
-    private TopicSession topicSession;
+    private Session session;
 
     /**
      * Message Producer used within the above JMS session.
      */
     private MessageProducer messageProducer;
-
-    /**
-     * Name of topic.
-     */
-    private String topicName;
 
     /**
      * Object-wise lock to synchronize publishing to the same topic.
@@ -132,42 +162,88 @@ public class JMSPublisherContext {
 
         jndiProperties = new Properties();
         jndiProperties.load(new FileInputStream(JNDI_FILE_PATH));
-        jndiProperties.put(Context.INITIAL_CONTEXT_FACTORY, QPID_ICF);
+        jndiProperties.put(Context.INITIAL_CONTEXT_FACTORY, WSO2MB_ICF);
 
     }
 
     /**
-     * Initialize the JMSPublisherContext for a specific topicName planning to use a pre-defined JMS connection factory.
+     * Initialize the JMSPublisherContext for a specific destination planning to use a pre-defined JMS connection
+     * factory.
      *
-     * @param topicName             Name of topic
+     * @param destinationName             Name of topic
      * @param connectionFactoryName Name of JMS connection factory as defined in jndi.properties file.
-     * @throws NamingException
-     * @throws JMSException
-     * @throws IOException
+     * @throws NamingException if the jndi processing results in an invliad naming convention or non-existent
+     * properties.
+     * @throws JMSException Connectivity issues, invalid destination type
+     * @throws IOException File reading error when trying to read the jndi.properties file.
      */
-    public JMSPublisherContext(String topicName, String connectionFactoryName) throws NamingException, JMSException, IOException {
+    public JMSPublisherContext(String destinationName, String connectionFactoryName, String destinationType) throws
+            NamingException, JMSException, IOException {
 
         if (null == jndiProperties) {
             JMSPublisherContext.initializeJNDIProperties();
         }
 
-        if (!jndiProperties.containsKey(TOPIC_NAME_PREFIX + topicName)) {
-            log.warn("Topic not defined in default jndi.properties !");
-            jndiProperties.put(TOPIC_NAME_PREFIX + topicName, topicName);
+        this.destinationName = destinationName;
+        this.connectionFactoryName = connectionFactoryName;
+        this.destinationType = destinationType;
+
+        switch (destinationType) {
+
+        case QUEUE_NAME_PREFIX:
+            initializeQueueProducer();
+            break;
+
+        case TOPIC_NAME_PREFIX:
+            initializeTopicProducer();
+            break;
+
+        default:
+            throw new JMSException(
+                    "Invalid destination type. It must be a queue or a topic. Current value : " + destinationType);
+        }
+
+        log.info("Initialized Session for "+ destinationType +" : " + destinationName);
+    }
+
+    private void initializeQueueProducer() throws NamingException, JMSException {
+
+        if (!jndiProperties.containsKey(QUEUE_NAME_PREFIX + "." + destinationName)) {
+            log.warn("Queue not defined in default jndi.properties !");
+            jndiProperties.put(QUEUE_NAME_PREFIX + "." + destinationName, destinationName);
         }
 
         InitialContext initialJMSContext = new InitialContext(jndiProperties);
-        topicConnectionFactory = (TopicConnectionFactory) initialJMSContext.lookup(connectionFactoryName);
 
-        topicConnection = topicConnectionFactory.createTopicConnection();
-        topicSession = topicConnection.createTopicSession(false, TopicSession.AUTO_ACKNOWLEDGE);
+        connectionFactory = (QueueConnectionFactory) initialJMSContext.lookup(connectionFactoryName);
+        connection = ((QueueConnectionFactory) connectionFactory).createQueueConnection();
+        session = ((QueueConnection) connection).createQueueSession(false, QueueSession.AUTO_ACKNOWLEDGE);
 
-        Topic topic = (Topic) initialJMSContext.lookup(topicName);
+        Queue queue = (Queue) initialJMSContext.lookup(destinationName);
 
-        messageProducer = topicSession.createProducer(topic);
+        messageProducer = ((QueueSession)session).createSender(queue);
 
-        this.topicName = topicName;
-        log.info("Initialized Session for Topic : " + topicName);
+        destination = queue;
+    }
+
+    private void initializeTopicProducer() throws NamingException, JMSException {
+
+        if (!jndiProperties.containsKey(TOPIC_NAME_PREFIX + "." + destinationName)) {
+            log.warn("Topic not defined in default jndi.properties !");
+            jndiProperties.put(TOPIC_NAME_PREFIX + "." + destinationName, destinationName);
+        }
+
+        InitialContext initialJMSContext = new InitialContext(jndiProperties);
+
+        connectionFactory = (TopicConnectionFactory) initialJMSContext.lookup(connectionFactoryName);
+        connection = ((TopicConnectionFactory) connectionFactory).createTopicConnection();
+        session = ((TopicConnection) connection).createTopicSession(false, TopicSession.AUTO_ACKNOWLEDGE);
+
+        Topic topic = (Topic) initialJMSContext.lookup(destinationName);
+
+        messageProducer = ((TopicSession)session).createPublisher(topic);
+
+        destination = topic;
     }
 
     /**
@@ -179,7 +255,7 @@ public class JMSPublisherContext {
      */
     public void publishMessage(MessageContext messageContext) throws AxisFault, JMSException {
 
-        if (null != topicSession && null != messageProducer) {
+        if (null != session && null != messageProducer) {
             Message messageToPublish = createJMSMessage(messageContext);
 
             send(messageToPublish, messageContext);
@@ -226,7 +302,7 @@ public class JMSPublisherContext {
             OutputStream out;
             StringWriter sw;
             if (useBytesMessage) {
-                BytesMessage bytesMsg = topicSession.createBytesMessage();
+                BytesMessage bytesMsg = session.createBytesMessage();
                 sw = null;
                 out = new BytesMessageOutputStream(bytesMsg);
                 message = bytesMsg;
@@ -248,13 +324,13 @@ public class JMSPublisherContext {
             }
 
             if (!useBytesMessage) {
-                TextMessage txtMsg = topicSession.createTextMessage();
+                TextMessage txtMsg = session.createTextMessage();
                 txtMsg.setText(sw.toString());
                 message = txtMsg;
             }
 
         } else if (JMSConstants.JMS_BYTE_MESSAGE.equals(jmsPayloadType)) {
-            message = topicSession.createBytesMessage();
+            message = session.createBytesMessage();
             BytesMessage bytesMsg = (BytesMessage) message;
             OMElement wrapper = msgContext.getEnvelope().getBody().
                     getFirstChildWithName(BaseConstants.DEFAULT_BINARY_WRAPPER);
@@ -272,12 +348,12 @@ public class JMSPublisherContext {
             }
 
         } else if (JMSConstants.JMS_TEXT_MESSAGE.equals(jmsPayloadType)) {
-            message = topicSession.createTextMessage();
+            message = session.createTextMessage();
             TextMessage txtMsg = (TextMessage) message;
             txtMsg.setText(msgContext.getEnvelope().getBody().
                     getFirstChildWithName(BaseConstants.DEFAULT_TEXT_WRAPPER).getText());
         } else if (JMSConstants.JMS_MAP_MESSAGE.equalsIgnoreCase(jmsPayloadType)) {
-            message = topicSession.createMapMessage();
+            message = session.createMapMessage();
             JMSUtils.convertXMLtoJMSMap(msgContext.getEnvelope().getBody().getFirstChildWithName(
                     JMSConstants.JMS_MAP_QNAME), (MapMessage) message);
         }
@@ -429,8 +505,21 @@ public class JMSPublisherContext {
         boolean sendingSuccessful = false;
         // perform actual message sending
         try {
-            messageProducer.send(message);
-            log.info("Published message to topic : " + topicName);
+
+            if (QUEUE_NAME_PREFIX.equals(destinationType)) {
+                try {
+                    ((QueueSender) messageProducer).send(message);
+                } catch (JMSException e) {
+                    //Create temporary consumer to create a queue reference in MB before publishing.
+                    MessageConsumer consumer = ((QueueSession) session).createReceiver((Queue)destination);
+                    consumer.close();
+                    ((QueueSender) messageProducer).send(message);
+                }
+            } else {
+                ((TopicPublisher)messageProducer).publish(message);
+            }
+
+            log.info("Published message to " + destinationType + " : " + destinationName);
 
             // set the actual MessageID to the message context for use by any others down the line
             String msgId = null;
@@ -452,7 +541,7 @@ public class JMSPublisherContext {
 
         } catch (JMSException e) {
             handleException("Error sending message with MessageContext ID : " +
-                    msgCtx.getMessageID() + " to destination : " + topicName, e);
+                    msgCtx.getMessageID() + " to destination " + destinationType + " : " + destinationName, e);
 
         } finally {
 
@@ -477,17 +566,17 @@ public class JMSPublisherContext {
                     } catch (Exception e) {
                         handleException("Error committing/rolling back JTA transaction after " +
                                 "sending of message with MessageContext ID : " + msgCtx.getMessageID() +
-                                " to destination : " + topicName, e);
+                                " to destination : " + destinationName, e);
                     }
                 }
 
             } else {
                 try {
-                    if (topicSession.getTransacted()) {
+                    if (session.getTransacted()) {
                         if (sendingSuccessful) {
-                            topicSession.commit();
+                            session.commit();
                         } else {
-                            topicSession.rollback();
+                            session.rollback();
                         }
                     }
 
@@ -499,7 +588,7 @@ public class JMSPublisherContext {
                 } catch (JMSException e) {
                     handleException("Error committing/rolling back local (i.e. session) " +
                             "transaction after sending of message with MessageContext ID : " +
-                            msgCtx.getMessageID() + " to destination : " + topicName, e);
+                            msgCtx.getMessageID() + " to destination : " + destinationName, e);
                 }
             }
 
@@ -537,14 +626,14 @@ public class JMSPublisherContext {
         if (null != messageProducer) {
             messageProducer.close();
         }
-        if (null != topicSession) {
-            topicSession.close();
+        if (null != session) {
+            session.close();
         }
-        if (null != topicConnection) {
-            topicConnection.close();
+        if (null != connection) {
+            connection.close();
         }
-        if (null != topicConnectionFactory) {
-            topicConnectionFactory = null;
+        if (null != connectionFactory) {
+            connectionFactory = null;
         }
     }
 

@@ -1,4 +1,4 @@
-## JMS Publisher Cache Mediator for WSO2 ESB + WSO2 MB integration with JMS Topics
+## JMS Publisher Cache Mediator for WSO2 ESB + WSO2 MB integration with JMS Topics/Queues
 
 ### Purpose
 
@@ -6,7 +6,7 @@ The default JMS transport in WSO2 ESB 4.8.1 does not support re-use of JMS sessi
 
 There is a workaround to enable caching the session by configuring the ESB as per article [1]. However, this involves having a bulky configuration for each destination and requires the user to know all the destination names before using the application. 
 
-This custom mediator enables re-use of JMS sessions specifically for JMS topics that are not known beforehand (in a use case where the topic name is inferred based on user's input). Test results of the 3 approaches in comparison can be found at [2]. In summary, re-using the JMS sessions proved to have about a 3-fold performance improvement as per the tests.  
+This custom mediator enables re-use of JMS sessions specifically for JMS topics/queues that are not known beforehand (in a use case where the destination name is inferred based on user's input). Test results of the 3 approaches in comparison can be found at [2]. In summary, re-using the JMS sessions proved to have about a 3-fold performance improvement as per the tests.  
 
 ### Usage
 
@@ -35,16 +35,18 @@ You can use the mediator within a proxy as follows :
                   expression="//xsd:symbol">
             <target>
                <sequence>
-                  <property name="topicName"
-                            expression="//xsd:symbol"
-                            scope="default"
-                            type="STRING"
-                            description="GET STORE ID AKA TOPIC NAME"/>
+                  <property name="destinationType" value="topic"/>
+                  <property name="destinationName" expression="//xsd:symbol" description="GET STORE ID AKA TOPIC NAME"/>
+                  <property name="topicConnectionFactoryName" value="TopicConnectionFactory1"/>
+                  
+                  <!-- if publishing to queue, set below property instead of topicConnectionFactoryName -->
+                  <!--property name="queueConnectionFactoryName" value="QueueConnectionFactory1"/-->
+                  
                   <log level="custom" description="LOG STORE ID">
                      <property name="topicNameOfStore" expression="get-property('topicName')"/>
                   </log>
+                  
                   <class name="org.wso2.mediators.custom.JMSPublisherCacheMediator">
-                     <property name="connectionFactoryName" value="TopicConnectionFactory"/>
 		                 <property name="cacheExpirationInterval" value="3600"/>
                   </class>
                </sequence>
@@ -58,11 +60,11 @@ You can use the mediator within a proxy as follows :
 </proxy>
 ```
 
-In the above configuration, the "connectionFactoryName" property points to the connectionFactory chosen to publish to topics from the ESB_HOME/repository/conf/jndi.properties file. And the "cacheExpirationInterval" points to the interval at which the cached JMS sessions would expire (in seconds).
+In the above configuration, the "topicConnectionFactoryName" property points to the connectionFactory chosen to publish to topics from the ESB_HOME/repository/conf/jndi.properties file (If you publish to a queue, you need to set the "queueConnectionFactory" property). And the "cacheExpirationInterval" points to the interval at which the cached JMS sessions would expire (in seconds).
 
-*Both these properties are static and cannot be changed once the server is started.
+*CacheExpirationInterval is static across all proxies using the mediator, and cannot be changed once the server is started.
 
-*If the cacheExpirationInterval is less than the time taken to publish a single message, there is a possiblity of the JMS session being destroyed while publishing is in progress. To avoid this, always use a sensible interval for cache expiry. The wso2 carbon cache runs checks for expiration every 30 seconds, so it is ideal to maintain the cacheExpirationInterval as a value > 30).
+*If the cacheExpirationInterval is less than the time taken to publish a single message, there is a possibility of the JMS session being destroyed while publishing is in progress. To avoid this, always use a sensible interval for cache expiry. The wso2 carbon cache runs checks for expiration every 30 seconds, so it is ideal to maintain the cacheExpirationInterval as a value > 30).
 
 [1] : http://waruapz.blogspot.com/2014/10/jms-performance-tuning-with-wso2-esb.html
 [2] : https://github.com/hastef88/wso2.tryouts/blob/master/JMSPublisherCacheMediator/test_artifacts/Performance%20comparison%20-%20JMS%20Publisher%20Caching%20vs%20Non-caching.pdf

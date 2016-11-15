@@ -47,43 +47,58 @@ public class JMSPublisherCacheMediator extends AbstractMediator {
     private static final Log log = LogFactory.getLog(JMSPublisherCacheMediator.class);
 
     /**
-     * Connection Factory Name chosen for publishing the message. (Should be a pre-defined value in conf/jndi.properties)
-     * This should be shared as a static parameter of the mediator at proxy configuration.
-     */
-    private String connectionFactoryName;
-
-    /**
      * interval at which the cache should expire (in seconds).
      */
     private int cacheExpirationInterval;
 
+    /**
+     * Connection factory name as configured in jndi.properties file. Could use different connection factories for
+     * topics and queues.
+     */
+    private String connectionFactoryName;
+
+    /**
+     * Type of destination. "queue" or "topic".
+     */
+    private String destinationType;
+
     @Override
     public boolean mediate(MessageContext messageContext) {
 
-        String topicName = messageContext.getProperty("topicName").toString();
+        String destinationName = messageContext.getProperty("destinationName").toString();
+
+        if (StringUtils.isBlank(destinationName)) {
+            handleException("Could not find a valid topic name to publish the message.", messageContext);
+        }
+
+        if ((!JMSPublisherContext.QUEUE_NAME_PREFIX.equals(destinationType)) &&
+                (!JMSPublisherContext.TOPIC_NAME_PREFIX.equals(destinationType))) {
+            handleException("Invalid destination type. It must be a queue or a topic. Current value : " +
+                    destinationType, messageContext);
+        }
 
         if (log.isDebugEnabled()) {
-            log.debug("Processing message for topic : " + topicName);
+            log.debug("Processing message for destination : " + destinationType + " : " + destinationName + " with "
+                    + "connection factory : " + connectionFactoryName);
         }
 
         PrivilegedCarbonContext.getCurrentContext().setTenantDomain(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME);
         PrivilegedCarbonContext.getCurrentContext().setTenantId(MultitenantConstants.SUPER_TENANT_ID);
 
-        if (StringUtils.isBlank(topicName)) {
-            handleException("Could not find a valid topic name to publish the message.", messageContext);
-        }
-
         JMSPublisherCache.setCacheExpirationInterval(cacheExpirationInterval);
 
         JMSPublisherContext publisherContext;
 
-        synchronized (topicName.intern()) {
-            publisherContext = JMSPublisherCache.getJMSPublisherCache().get(topicName);
+        String publisherContextKey = destinationType+":/"+destinationName; //queue:/queueA
+
+        synchronized (publisherContextKey.intern()) {
+            publisherContext = JMSPublisherCache.getJMSPublisherCache().get(publisherContextKey);
 
             if (null == publisherContext) {
-                log.info("JMS Publisher context cache miss for topic : " + topicName);
+                log.info("JMS Publisher context cache miss for destination : " + destinationName);
                 try {
-                    publisherContext = new JMSPublisherContext(topicName, this.connectionFactoryName);
+                    publisherContext = new JMSPublisherContext(destinationName, connectionFactoryName,
+                            destinationType);
                 } catch (JMSException e) {
                     handleException("JMSException : ", e, messageContext);
                 } catch (NamingException e) {
@@ -93,7 +108,7 @@ public class JMSPublisherCacheMediator extends AbstractMediator {
                 } catch (IOException e) {
                     handleException("IOException : " + e, messageContext);
                 }
-                JMSPublisherCache.getJMSPublisherCache().put(topicName, publisherContext);
+                JMSPublisherCache.getJMSPublisherCache().put(publisherContextKey, publisherContext);
             }
         }
 
@@ -125,6 +140,14 @@ public class JMSPublisherCacheMediator extends AbstractMediator {
         super.handleException(message, e, messageContext);
     }
 
+    public int getCacheExpirationInterval() {
+        return cacheExpirationInterval;
+    }
+
+    public void setCacheExpirationInterval(int cacheExpirationInterval) {
+        this.cacheExpirationInterval = cacheExpirationInterval;
+    }
+
     public String getConnectionFactoryName() {
         return connectionFactoryName;
     }
@@ -133,11 +156,11 @@ public class JMSPublisherCacheMediator extends AbstractMediator {
         this.connectionFactoryName = connectionFactoryName;
     }
 
-    public int getCacheExpirationInterval() {
-        return cacheExpirationInterval;
+    public String getDestinationType() {
+        return destinationType;
     }
 
-    public void setCacheExpirationInterval(int cacheExpirationInterval) {
-        this.cacheExpirationInterval = cacheExpirationInterval;
+    public void setDestinationType(String destinationType) {
+        this.destinationType = destinationType;
     }
 }
