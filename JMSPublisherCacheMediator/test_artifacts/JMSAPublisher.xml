@@ -25,7 +25,7 @@
                      <property name="topicNameOfStore" expression="get-property('topicName')"/>
                   </log>
                   <class name="org.wso2.mediators.custom.JMSPublisherCacheMediator">
-                     <property name="connectionFactoryName" value="TopicConnectionFactory"/>
+                     <property name="topicConnectionFactoryName" value="TopicConnectionFactory"/>
 		     <property name="cacheExpirationInterval" value="3600"/>
                   </class>
                </sequence>
