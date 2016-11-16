@@ -45,7 +45,6 @@ import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.Message;
-import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.Queue;
 import javax.jms.QueueConnection;
@@ -510,9 +509,8 @@ public class JMSPublisherContext {
                 try {
                     ((QueueSender) messageProducer).send(message);
                 } catch (JMSException e) {
-                    //Create temporary consumer to create a queue reference in MB before publishing.
-                    MessageConsumer consumer = ((QueueSession) session).createReceiver((Queue)destination);
-                    consumer.close();
+                    //create a queue reference in MB before publishing.
+                    ((QueueSession) session).createQueue(destinationName);
                     ((QueueSender) messageProducer).send(message);
                 }
             } else {
