@@ -517,7 +517,9 @@ public class JMSPublisherContext {
                 ((TopicPublisher)messageProducer).publish(message);
             }
 
-            log.info("Published message to " + destinationType + " : " + destinationName);
+            if (log.isDebugEnabled()) {
+                log.debug("Published message to " + destinationType + " : " + destinationName);
+            }
 
             // set the actual MessageID to the message context for use by any others down the line
             String msgId = null;
