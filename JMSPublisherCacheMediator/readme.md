@@ -35,18 +35,16 @@ You can use the mediator within a proxy as follows :
                   expression="//xsd:symbol">
             <target>
                <sequence>
-                  <property name="destinationType" value="topic"/>
+                  
                   <property name="destinationName" expression="//xsd:symbol" description="GET STORE ID AKA TOPIC NAME"/>
-                  <property name="topicConnectionFactoryName" value="TopicConnectionFactory1"/>
-                  
-                  <!-- if publishing to queue, set below property instead of topicConnectionFactoryName -->
-                  <!--property name="queueConnectionFactoryName" value="QueueConnectionFactory1"/-->
-                  
+
                   <log level="custom" description="LOG STORE ID">
                      <property name="topicNameOfStore" expression="get-property('topicName')"/>
                   </log>
                   
                   <class name="org.wso2.mediators.custom.JMSPublisherCacheMediator">
+                         <property name="connectionFactoryName" value="QueuePublisherFactory"/>
+                         <property name="destinationType" value="queue"/>
 		                 <property name="cacheExpirationInterval" value="3600"/>
                   </class>
                </sequence>
@@ -60,7 +58,7 @@ You can use the mediator within a proxy as follows :
 </proxy>
 ```
 
-In the above configuration, the "topicConnectionFactoryName" property points to the connectionFactory chosen to publish to topics from the ESB_HOME/repository/conf/jndi.properties file (If you publish to a queue, you need to set the "queueConnectionFactory" property). And the "cacheExpirationInterval" points to the interval at which the cached JMS sessions would expire (in seconds).
+In the above configuration, the "connectionFactoryName" property points to the connectionFactory chosen to publish to topics/queues from the ESB_HOME/repository/conf/jndi.properties file. And the "cacheExpirationInterval" points to the interval at which the cached JMS sessions would expire (in seconds).
 
 *CacheExpirationInterval is static across all proxies using the mediator, and cannot be changed once the server is started.
 
