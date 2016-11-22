@@ -26,9 +26,11 @@ import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.mediators.AbstractMediator;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
-import org.wso2.mediators.custom.util.JMSPublisherCache;
-import org.wso2.mediators.custom.util.JMSPublisherContext;
+import org.wso2.mediators.custom.util.jms.PublisherCache;
+import org.wso2.mediators.custom.util.jms.PublisherContext;
+import org.wso2.mediators.custom.util.jms.PublisherPool;
 
+import javax.jms.IllegalStateException;
 import javax.jms.JMSException;
 import javax.naming.NamingException;
 import java.io.IOException;
@@ -62,6 +64,11 @@ public class JMSPublisherCacheMediator extends AbstractMediator {
      */
     private String destinationType;
 
+    /** Maximum number of connections allowed for a single destination+destinationType combination.
+     *
+     */
+    private String connectionPoolSize;
+
     @Override
     public boolean mediate(MessageContext messageContext) {
 
@@ -71,8 +78,8 @@ public class JMSPublisherCacheMediator extends AbstractMediator {
             handleException("Could not find a valid topic name to publish the message.", messageContext);
         }
 
-        if ((!JMSPublisherContext.QUEUE_NAME_PREFIX.equals(destinationType)) &&
-                (!JMSPublisherContext.TOPIC_NAME_PREFIX.equals(destinationType))) {
+        if ((!PublisherContext.QUEUE_NAME_PREFIX.equals(destinationType)) &&
+                (!PublisherContext.TOPIC_NAME_PREFIX.equals(destinationType))) {
             handleException("Invalid destination type. It must be a queue or a topic. Current value : " +
                     destinationType, messageContext);
         }
@@ -85,43 +92,61 @@ public class JMSPublisherCacheMediator extends AbstractMediator {
         PrivilegedCarbonContext.getCurrentContext().setTenantDomain(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME);
         PrivilegedCarbonContext.getCurrentContext().setTenantId(MultitenantConstants.SUPER_TENANT_ID);
 
-        JMSPublisherCache.setCacheExpirationInterval(cacheExpirationInterval);
+        PublisherCache.setCacheExpirationInterval(cacheExpirationInterval);
 
-        JMSPublisherContext publisherContext;
+        PublisherPool publisherPool;
+        PublisherContext publisherContext = null;
 
         String publisherContextKey = destinationType+":/"+destinationName; //queue:/queueA
 
         synchronized (publisherContextKey.intern()) {
-            publisherContext = JMSPublisherCache.getJMSPublisherCache().get(publisherContextKey);
+            publisherPool = PublisherCache.getJMSPublisherPoolCache().get(publisherContextKey);
 
-            if (null == publisherContext) {
-                log.info("JMS Publisher context cache miss for destination : " + destinationName);
-                try {
-                    publisherContext = new JMSPublisherContext(destinationName, connectionFactoryName,
-                            destinationType);
-                } catch (JMSException e) {
-                    handleException("JMSException : ", e, messageContext);
-                } catch (NamingException e) {
-                    handleException("NamingException : ", e, messageContext);
-                } catch (AxisFault e) {
-                    handleException("AxisFault : ", e, messageContext);
-                } catch (IOException e) {
-                    handleException("IOException : " + e, messageContext);
-                }
-                JMSPublisherCache.getJMSPublisherCache().put(publisherContextKey, publisherContext);
+            if (null == publisherPool) {
+                log.info("JMS Publisher pool cache miss for destination : " + destinationName);
+                publisherPool = new PublisherPool(destinationName, destinationType,
+                        connectionFactoryName, java.lang.Integer.parseInt(connectionPoolSize));
+                PublisherCache.getJMSPublisherPoolCache().put(publisherContextKey, publisherPool);
             }
         }
 
-
         try {
+
+            publisherContext = publisherPool.getPublisher();
             assert publisherContext != null;
             publisherContext.publishMessage(((Axis2MessageContext) messageContext).getAxis2MessageContext());
             return true;
 
+        } catch (IllegalStateException e ) {
+            try {
+                publisherPool.close();
+            } catch (JMSException e1) {
+                handleException("JMSException while trying clear publisher connections due to failover : ", e,
+                        messageContext);
+            }
+            handleException("JMSException : ", e, messageContext);
         } catch (JMSException e) {
+            try {
+                publisherPool.close();
+            } catch (JMSException e1) {
+                handleException("JMSException while trying clear publisher connections due to failover : ", e,
+                        messageContext);
+            }
             handleException("JMSException : ", e, messageContext);
         } catch (AxisFault e) {
             handleException("AxisFault : ", e, messageContext);
+        } catch (IOException e) {
+            handleException("IOException : " + e, messageContext);
+        } catch (NamingException e) {
+            handleException("NamingException : ", e, messageContext);
+        } finally {
+            if (null != publisherContext) {
+                try {
+                    publisherPool.releasePublisher(publisherContext);
+                } catch (JMSException e) {
+                    handleException("Error while releasing publisher after sending message : ", e, messageContext);
+                }
+            }
         }
 
         return false;
@@ -162,5 +187,13 @@ public class JMSPublisherCacheMediator extends AbstractMediator {
 
     public void setDestinationType(String destinationType) {
         this.destinationType = destinationType;
+    }
+
+    public String getConnectionPoolSize() {
+        return connectionPoolSize;
+    }
+
+    public void setConnectionPoolSize(String connectionPoolSize) {
+        this.connectionPoolSize = connectionPoolSize;
     }
 }

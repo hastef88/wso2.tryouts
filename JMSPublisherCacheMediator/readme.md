@@ -46,6 +46,7 @@ You can use the mediator within a proxy as follows :
                          <property name="connectionFactoryName" value="QueuePublisherFactory"/>
                          <property name="destinationType" value="queue"/>
 		                 <property name="cacheExpirationInterval" value="3600"/>
+		                 <property name="connectionPoolSize" value="10"/>
                   </class>
                </sequence>
             </target>
@@ -61,6 +62,8 @@ You can use the mediator within a proxy as follows :
 In the above configuration, the "connectionFactoryName" property points to the connectionFactory chosen to publish to topics/queues from the ESB_HOME/repository/conf/jndi.properties file. And the "cacheExpirationInterval" points to the interval at which the cached JMS sessions would expire (in seconds).
 
 *CacheExpirationInterval is static across all proxies using the mediator, and cannot be changed once the server is started.
+
+connectionPoolSize is the maximum number of active connections 1 ESB node can maintain with 1 broker node for a given destination+destinationType combination. This will allow multiple requests coming in parallelly to be handled in the same incoming speed instead of sharing a synchronous single JMS connection.
 
 *If the cacheExpirationInterval is less than the time taken to publish a single message, there is a possibility of the JMS session being destroyed while publishing is in progress. To avoid this, always use a sensible interval for cache expiry. The wso2 carbon cache runs checks for expiration every 30 seconds, so it is ideal to maintain the cacheExpirationInterval as a value > 30).
 

@@ -1,21 +1,24 @@
 /*
- * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
- * Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License.
- * You may obtain a copy of the License at
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *  * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *  *
+ *  * WSO2 Inc. licenses this file to you under the Apache License,
+ *  * Version 2.0 (the "License"); you may not use this file except
+ *  * in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *    http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing,
+ *  * software distributed under the License is distributed on an
+ *  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  * KIND, either express or implied.  See the License for the
+ *  * specific language governing permissions and limitations
+ *  * under the License.
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
  */
 
-package org.wso2.mediators.custom.util;
+package org.wso2.mediators.custom.util.jms;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,19 +36,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @link org.wso2.mediators.custom.JMSPublisherCacheMediator.
  */
-public class JMSPublisherCache {
+public class PublisherCache {
 
     /**
      * Is set to true if the global cache already initialized.
      */
     private static AtomicBoolean isCacheInitialized = new AtomicBoolean(false);
 
-    private static final Log log = LogFactory.getLog(JMSPublisherCache.class);
+    private static final Log log = LogFactory.getLog(PublisherCache.class);
 
     /**
      * Cache Name
      */
-    private static final String CACHE_KEY = "JMSPublisherCache";
+    private static final String CACHE_KEY = "PublisherPoolCache";
 
     /**
      * Name of CacheManager holding the cache
@@ -60,15 +63,14 @@ public class JMSPublisherCache {
     /**
      * Listener to handle removal/expiration of a cached entry
      */
-    private final static JMSPublisherContextCacheExpiredListener<String, JMSPublisherContext> entryExpiredListener = new
-            JMSPublisherContextCacheExpiredListener<>();
+    private final static PublisherPoolCacheExpiredListener<String, PublisherPool> entryExpiredListener = new PublisherPoolCacheExpiredListener<>();
 
     /**
      * Get the cache which holds all sessions created for publishing to topics using this mediator.
      *
-     * @return Cache with key JMSPublisherCache
+     * @return Cache with key PublisherCache
      */
-    public static Cache<String, JMSPublisherContext> getJMSPublisherCache() {
+    public static Cache<String, PublisherPool> getJMSPublisherPoolCache() {
 
         if (isCacheInitialized.get()) {
             return Caching.getCacheManagerFactory().getCacheManager(CACHE_MANAGER_KEY).getCache(CachingConstants.LOCAL_CACHE_PREFIX +
@@ -84,7 +86,7 @@ public class JMSPublisherCache {
             CacheManager cacheManager = Caching.getCacheManagerFactory().getCacheManager(CACHE_MANAGER_KEY);
             isCacheInitialized.getAndSet(true);
 
-            Cache<String, JMSPublisherContext> cache = cacheManager.<String, JMSPublisherContext>createCacheBuilder(cacheName)
+            Cache<String, PublisherPool> cache = cacheManager.<String, PublisherPool>createCacheBuilder(cacheName)
                     .setExpiry(CacheConfiguration.ExpiryType.MODIFIED,
                             new CacheConfiguration.Duration(TimeUnit.SECONDS, cacheExpirationInterval))
                     .setExpiry(CacheConfiguration.ExpiryType.ACCESSED,
@@ -102,6 +104,6 @@ public class JMSPublisherCache {
      * @param cacheExpirationInterval interval at which the cached entries should expire based on last Accessed timestamp.
      */
     public static void setCacheExpirationInterval(int cacheExpirationInterval) {
-        JMSPublisherCache.cacheExpirationInterval = cacheExpirationInterval;
+        PublisherCache.cacheExpirationInterval = cacheExpirationInterval;
     }
 }

@@ -1,21 +1,24 @@
 /*
- * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
- * Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License.
- * You may obtain a copy of the License at
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *  * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *  *
+ *  * WSO2 Inc. licenses this file to you under the Apache License,
+ *  * Version 2.0 (the "License"); you may not use this file except
+ *  * in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *    http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing,
+ *  * software distributed under the License is distributed on an
+ *  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  * KIND, either express or implied.  See the License for the
+ *  * specific language governing permissions and limitations
+ *  * under the License.
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
  */
 
-package org.wso2.mediators.custom.util;
+package org.wso2.mediators.custom.util.jms;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.OMNode;
@@ -76,9 +79,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * This class maintains all the JMS sessions and connections required to publish a message to a single topic/queue.
  * Certain methods from the ESB JMS transport itself have been re-used here with minor modifications.
  */
-public class JMSPublisherContext {
+public class PublisherContext {
 
-    private static final Log log = LogFactory.getLog(JMSPublisherContext.class);
+    private static final Log log = LogFactory.getLog(PublisherContext.class);
 
     /**
      * Connection Factory type specific to WSO2 MB
@@ -110,6 +113,10 @@ public class JMSPublisherContext {
      * Name of destination.
      */
     private String destinationName;
+
+    public String getDestinationName() {
+        return destinationName;
+    }
 
     /**
      * Name of connection factory.
@@ -166,7 +173,7 @@ public class JMSPublisherContext {
     }
 
     /**
-     * Initialize the JMSPublisherContext for a specific destination planning to use a pre-defined JMS connection
+     * Initialize the PublisherContext for a specific destination planning to use a pre-defined JMS connection
      * factory.
      *
      * @param destinationName             Name of topic
@@ -176,11 +183,11 @@ public class JMSPublisherContext {
      * @throws JMSException Connectivity issues, invalid destination type
      * @throws IOException File reading error when trying to read the jndi.properties file.
      */
-    public JMSPublisherContext(String destinationName, String connectionFactoryName, String destinationType) throws
+    public PublisherContext(String destinationName, String connectionFactoryName, String destinationType) throws
             NamingException, JMSException, IOException {
 
         if (null == jndiProperties) {
-            JMSPublisherContext.initializeJNDIProperties();
+            PublisherContext.initializeJNDIProperties();
         }
 
         this.destinationName = destinationName;
@@ -216,12 +223,14 @@ public class JMSPublisherContext {
 
         connectionFactory = (QueueConnectionFactory) initialJMSContext.lookup(connectionFactoryName);
         connection = ((QueueConnectionFactory) connectionFactory).createQueueConnection();
+
+        String contextKey = destinationType + ":/" + destinationName;
+        connection.setExceptionListener(new CustomJMSExceptionListener(contextKey));
         session = ((QueueConnection) connection).createQueueSession(false, QueueSession.AUTO_ACKNOWLEDGE);
 
         Queue queue = (Queue) initialJMSContext.lookup(destinationName);
 
         messageProducer = ((QueueSession)session).createSender(queue);
-
         destination = queue;
     }
 
@@ -236,6 +245,8 @@ public class JMSPublisherContext {
 
         connectionFactory = (TopicConnectionFactory) initialJMSContext.lookup(connectionFactoryName);
         connection = ((TopicConnectionFactory) connectionFactory).createTopicConnection();
+        String contextKey = destinationType + ":/" + destinationName;
+        connection.setExceptionListener(new CustomJMSExceptionListener(contextKey));
         session = ((TopicConnection) connection).createTopicSession(false, TopicSession.AUTO_ACKNOWLEDGE);
 
         Topic topic = (Topic) initialJMSContext.lookup(destinationName);
@@ -617,7 +628,7 @@ public class JMSPublisherContext {
 
     /**
      * Method to properly shutdown the JMS sessions and connections in the proper order. This is normally called when a cached
-     * JMSPublisherContext expires.
+     * PublisherContext expires.
      *
      * @throws JMSException
      */
@@ -635,6 +646,18 @@ public class JMSPublisherContext {
         if (null != connectionFactory) {
             connectionFactory = null;
         }
+    }
+
+    @Override
+    /**
+     *
+     */
+    public boolean equals(Object obj) {
+        if (obj instanceof PublisherContext) {
+            if (((PublisherContext) obj).publisherLock == this.publisherLock )
+                return true;
+        }
+        return false;
     }
 
     @Override
