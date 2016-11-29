@@ -28,6 +28,7 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 import org.wso2.mediators.custom.util.jms.PublisherCache;
 import org.wso2.mediators.custom.util.jms.PublisherContext;
+import org.wso2.mediators.custom.util.jms.PublisherNotAvailableException;
 import org.wso2.mediators.custom.util.jms.PublisherPool;
 
 import javax.jms.IllegalStateException;
@@ -139,6 +140,8 @@ public class JMSPublisherCacheMediator extends AbstractMediator {
             handleException("IOException : " + e, messageContext);
         } catch (NamingException e) {
             handleException("NamingException : ", e, messageContext);
+        } catch (PublisherNotAvailableException e) {
+            handleException("PublisherNotAvailableException : ", e, messageContext);
         } finally {
             if (null != publisherContext) {
                 try {
