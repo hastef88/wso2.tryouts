@@ -225,7 +225,7 @@ public class PublisherContext {
         connection = ((QueueConnectionFactory) connectionFactory).createQueueConnection();
 
         String contextKey = destinationType + ":/" + destinationName;
-        connection.setExceptionListener(new CustomJMSExceptionListener(contextKey));
+        connection.setExceptionListener(new JMSExceptionListener(contextKey));
         session = ((QueueConnection) connection).createQueueSession(false, QueueSession.AUTO_ACKNOWLEDGE);
 
         Queue queue = (Queue) initialJMSContext.lookup(destinationName);
@@ -246,7 +246,7 @@ public class PublisherContext {
         connectionFactory = (TopicConnectionFactory) initialJMSContext.lookup(connectionFactoryName);
         connection = ((TopicConnectionFactory) connectionFactory).createTopicConnection();
         String contextKey = destinationType + ":/" + destinationName;
-        connection.setExceptionListener(new CustomJMSExceptionListener(contextKey));
+        connection.setExceptionListener(new JMSExceptionListener(contextKey));
         session = ((TopicConnection) connection).createTopicSession(false, TopicSession.AUTO_ACKNOWLEDGE);
 
         Topic topic = (Topic) initialJMSContext.lookup(destinationName);

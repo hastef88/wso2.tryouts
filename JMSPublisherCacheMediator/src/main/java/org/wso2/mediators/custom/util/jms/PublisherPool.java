@@ -70,7 +70,8 @@ public class PublisherPool {
         this.maxSize = maxPoolSize;
     }
 
-    public PublisherContext getPublisher() throws JMSException, NamingException, IOException {
+    public PublisherContext getPublisher()
+            throws JMSException, NamingException, IOException, PublisherNotAvailableException {
 
         lock.lock();
         try {
@@ -96,10 +97,9 @@ public class PublisherPool {
         } finally {
             lock.unlock();
         }
-        // Keeping compiler happy.
-        throw new JMSException("The Publisher pool is fully utilized." + " destination : " + destinationType + ":"
-                + destination + ", free publishers : " + freePublishers.size() + ", busy publishers : "
-                + busyPublishers.size());
+
+        throw new PublisherNotAvailableException(destinationType, destination, freePublishers.size(),
+                busyPublishers.size());
     }
 
     public void releasePublisher(PublisherContext publisher) throws JMSException {
@@ -138,14 +138,19 @@ public class PublisherPool {
     public void close() throws JMSException {
         printDebugLog("Destroying publisher pool");
 
-        for (PublisherContext freePublisher : freePublishers) {
-            freePublisher.close();
-        }
-        for (PublisherContext busyPublisher : busyPublishers) {
-            busyPublisher.close();
-        }
+        lock.lock();
+        try {
+            for (PublisherContext freePublisher : freePublishers) {
+                freePublisher.close();
+            }
+            for (PublisherContext busyPublisher : busyPublishers) {
+                busyPublisher.close();
+            }
 
-        freePublishers.clear();
-        busyPublishers.clear();
+            freePublishers.clear();
+            busyPublishers.clear();
+        } finally {
+            lock.unlock();
+        }
     }
 }

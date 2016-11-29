@@ -31,13 +31,13 @@ import javax.jms.JMSException;
 /**
  * Custom exception handler to react to JMS exceptions during mediation.
  */
-public class CustomJMSExceptionListener implements ExceptionListener {
+public class JMSExceptionListener implements ExceptionListener {
 
-    private static final Log log = LogFactory.getLog(CustomJMSExceptionListener.class);
+    private static final Log log = LogFactory.getLog(JMSExceptionListener.class);
 
     private String publisherContextKey;
 
-    public CustomJMSExceptionListener(String publisherContextKey) {
+    public JMSExceptionListener(String publisherContextKey) {
 
         this.publisherContextKey = publisherContextKey;
     }
