@@ -119,21 +119,14 @@ public class JMSPublisherCacheMediator extends AbstractMediator {
             return true;
 
         } catch (IllegalStateException e ) {
-            try {
-                publisherPool.close();
-            } catch (JMSException e1) {
-                handleException("JMSException while trying clear publisher connections due to failover : ", e,
-                        messageContext);
-            }
-            handleException("JMSException : ", e, messageContext);
+            publisherPool.close();
+            handleException("IllegalStateException when publishing through JMS connection : ", e, messageContext);
+
         } catch (JMSException e) {
-            try {
-                publisherPool.close();
-            } catch (JMSException e1) {
-                handleException("JMSException while trying clear publisher connections due to failover : ", e,
-                        messageContext);
-            }
+
+            publisherPool.close();
             handleException("JMSException : ", e, messageContext);
+
         } catch (AxisFault e) {
             handleException("AxisFault : ", e, messageContext);
         } catch (IOException e) {

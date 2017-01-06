@@ -632,20 +632,32 @@ public class PublisherContext {
      *
      * @throws JMSException
      */
-    public void close() throws JMSException {
+    public void close() {
 
-        if (null != messageProducer) {
-            messageProducer.close();
+        try {
+            if (null != messageProducer) {
+                messageProducer.close();
+            }
+            if (null != session) {
+                session.close();
+            }
+            if (null != connection) {
+                connection.close();
+            }
+            if (null != connectionFactory) {
+                connectionFactory = null;
+            }
+        } catch (JMSException e) {
+            log.error("Error when trying to close JMS publisher connection for destination : " + destinationName
+                    + " with connection factory : " + connectionFactoryName);
         }
-        if (null != session) {
-            session.close();
-        }
-        if (null != connection) {
-            connection.close();
-        }
-        if (null != connectionFactory) {
+        finally {
+            messageProducer = null;
+            session = null;
+            connection = null;
             connectionFactory = null;
         }
+
     }
 
     @Override
@@ -658,14 +670,5 @@ public class PublisherContext {
                 return true;
         }
         return false;
-    }
-
-    @Override
-    /**
-     * In case cache expiry does not happen, the GC collection should trigger the shutdown of the context.
-     */
-    protected void finalize() throws Throwable {
-        close();
-        super.finalize();
     }
 }

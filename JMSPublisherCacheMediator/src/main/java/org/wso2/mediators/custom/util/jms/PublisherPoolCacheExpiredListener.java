@@ -42,12 +42,9 @@ public class PublisherPoolCacheExpiredListener<K, V> implements CacheEntryExpire
     public void entryExpired(CacheEntryEvent<? extends K, ? extends V> cacheEntryEvent) throws CacheEntryListenerException {
 
         if (cacheEntryEvent.getValue() instanceof PublisherPool) {
-            try {
-                log.info("Clearing PublisherPool for key : " + cacheEntryEvent.getKey());
-                ((PublisherPool) cacheEntryEvent.getValue()).close();
-            } catch (JMSException e) {
-                log.error("Error while clearing PublisherPool for key" + cacheEntryEvent.getKey(), e);
-            }
+            log.info("Clearing PublisherPool for key : " + cacheEntryEvent.getKey());
+            ((PublisherPool) cacheEntryEvent.getValue()).close();
+
         } else {
             log.warn("Expired entry is not a PublisherPool for key : " + cacheEntryEvent.getKey());
         }

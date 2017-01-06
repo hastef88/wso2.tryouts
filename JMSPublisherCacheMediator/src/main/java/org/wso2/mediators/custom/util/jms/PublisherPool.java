@@ -135,20 +135,24 @@ public class PublisherPool {
         }
     }
 
-    public void close() throws JMSException {
+    public void close() {
         printDebugLog("Destroying publisher pool");
 
         lock.lock();
         try {
+            printDebugLog("Acquired lock for destroying publisher pool");
             for (PublisherContext freePublisher : freePublishers) {
+                printDebugLog("Destroying free publisher ");
                 freePublisher.close();
             }
             for (PublisherContext busyPublisher : busyPublishers) {
+                printDebugLog("Destroying busy publisher ");
                 busyPublisher.close();
             }
 
             freePublishers.clear();
             busyPublishers.clear();
+            printDebugLog("Destroyed publisher pool");
         } finally {
             lock.unlock();
         }
