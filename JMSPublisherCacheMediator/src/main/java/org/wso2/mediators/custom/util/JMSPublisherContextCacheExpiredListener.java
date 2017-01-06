@@ -39,12 +39,8 @@ public class JMSPublisherContextCacheExpiredListener<K, V> implements CacheEntry
     public void entryExpired(CacheEntryEvent<? extends K, ? extends V> cacheEntryEvent) throws CacheEntryListenerException {
 
         if (cacheEntryEvent.getValue() instanceof JMSPublisherContext) {
-            try {
-                log.info("Clearing JMSPublisherContext for key : " + cacheEntryEvent.getKey());
-                ((JMSPublisherContext) cacheEntryEvent.getValue()).close();
-            } catch (JMSException e) {
-                log.error("Error while clearing JMSPublisherContext for key" + cacheEntryEvent.getKey(), e);
-            }
+            log.info("Clearing JMSPublisherContext for key : " + cacheEntryEvent.getKey());
+            ((JMSPublisherContext) cacheEntryEvent.getValue()).close();
         } else {
             log.warn("Expired entry is not a JMSPublisherContext for key : " + cacheEntryEvent.getKey());
         }

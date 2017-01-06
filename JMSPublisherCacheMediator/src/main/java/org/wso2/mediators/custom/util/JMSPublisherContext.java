@@ -216,6 +216,8 @@ public class JMSPublisherContext {
 
         connectionFactory = (QueueConnectionFactory) initialJMSContext.lookup(connectionFactoryName);
         connection = ((QueueConnectionFactory) connectionFactory).createQueueConnection();
+        String publisherContextKey = destinationType+":/"+destinationName;
+        connection.setExceptionListener(new JMSExceptionListener(publisherContextKey));
         session = ((QueueConnection) connection).createQueueSession(false, QueueSession.AUTO_ACKNOWLEDGE);
 
         Queue queue = (Queue) initialJMSContext.lookup(destinationName);
@@ -236,6 +238,8 @@ public class JMSPublisherContext {
 
         connectionFactory = (TopicConnectionFactory) initialJMSContext.lookup(connectionFactoryName);
         connection = ((TopicConnectionFactory) connectionFactory).createTopicConnection();
+        String publisherContextKey = destinationType+":/"+destinationName;
+        connection.setExceptionListener(new JMSExceptionListener(publisherContextKey));
         session = ((TopicConnection) connection).createTopicSession(false, TopicSession.AUTO_ACKNOWLEDGE);
 
         Topic topic = (Topic) initialJMSContext.lookup(destinationName);
@@ -621,28 +625,31 @@ public class JMSPublisherContext {
      *
      * @throws JMSException
      */
-    public void close() throws JMSException {
+    public void close() {
 
-        if (null != messageProducer) {
-            messageProducer.close();
+        try {
+            if (null != messageProducer) {
+                messageProducer.close();
+            }
+            if (null != session) {
+                session.close();
+            }
+            if (null != connection) {
+                connection.close();
+            }
+            if (null != connectionFactory) {
+                connectionFactory = null;
+            }
+        } catch (JMSException e) {
+            log.error("Error when trying to close JMS publisher connection for destination : " + destinationName
+                    + " with connection factory : " + connectionFactoryName);
         }
-        if (null != session) {
-            session.close();
-        }
-        if (null != connection) {
-            connection.close();
-        }
-        if (null != connectionFactory) {
+        finally {
+            messageProducer = null;
+            session = null;
+            connection = null;
             connectionFactory = null;
         }
     }
 
-    @Override
-    /**
-     * In case cache expiry does not happen, the GC collection should trigger the shutdown of the context.
-     */
-    protected void finalize() throws Throwable {
-        close();
-        super.finalize();
-    }
 }
