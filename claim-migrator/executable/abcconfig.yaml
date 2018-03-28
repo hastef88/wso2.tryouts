@@ -1,0 +1,8 @@
+# Info required to import claims from one WSO2 IS deployment to another.
+---
+fromServiceURI: "https://identity.dev.com/services/ClaimManagementService"
+toServiceURI: "https://identity.qa.com/services/ClaimManagementService"
+claimDialectURI: "http://wso2.org/claims"
+claimDisplayTags:
+  - "Permenant Lock"
+  - "Last Name"
