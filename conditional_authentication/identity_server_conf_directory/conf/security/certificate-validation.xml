@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<CertificateValidation xmlns="http://wso2.org/projects/carbon/certificate-validation.xml">
+<Validators>
+	<!-- Validator for validating revocation status of X509 cerificate with CRL -->
+	<Validator name="org.wso2.carbon.identity.x509Certificate.validation.validator.OCSPValidator" displayName="OCSPValidator" enable="true">
+		<!-- Priority of the validator -->
+        	<Parameter name="priority">1</Parameter>
+		<!-- Enable full chain validation, to validate with the CRL of every intermediate certificate within the chain of trust for the client, 		     except for the root CA certificate -->
+        	<Parameter name="fullChainValidation">true</Parameter>
+		<!-- Maximum number of times which we can attempt to download the CRL file -->
+		<Parameter name="retryCount">2</Parameter>
+	</Validator>
+	
+	<!-- Validator for validating revocation status of X509 cerificate with OCSP -->	
+	<Validator name="org.wso2.carbon.identity.x509Certificate.validation.validator.CRLValidator" displayName="CRLValidator" enable="true">
+		<Parameter name="priority">2</Parameter>
+		<Parameter name="fullChainValidation">true</Parameter>
+		<!-- Maximum number of times which we can attempt to get the OCSP response -->
+		<Parameter name="retryCount">2</Parameter>
+	</Validator>
+</Validators>
+
+<!-- Trust stores with certificates of CAs and intermediate CAs which are to be considered as trusted CAs for X509 certificate validation with CRL and OCSP --> 
+<!--TrustStores>
+    <TrustStore truststoreFile="<trustStore_file_path>" truststorePass="<trustStore_password>" type="JKS"/>
+</TrustStores-->
+</CertificateValidation>
+
