@@ -197,6 +197,19 @@
     <!--<transportSender name="java"-->
     <!--class="org.apache.axis2.transport.java.JavaTransportSender"/>-->
 
+        <!-- To enable mail transport sender, ncomment the following and change the parameters
+         accordingly-->
+    <transportSender name="mailto"
+                     class="org.apache.axis2.transport.mail.MailTransportSender">
+        <parameter name="mail.smtp.from">abc.demo@gmail.com</parameter>
+        <parameter name="mail.smtp.user">abc.demo</parameter>
+        <parameter name="mail.smtp.password">demo#@!</parameter>
+        <parameter name="mail.smtp.host">smtp.gmail.com</parameter>
+
+        <parameter name="mail.smtp.port">587</parameter>
+        <parameter name="mail.smtp.starttls.enable">true</parameter>
+        <parameter name="mail.smtp.auth">true</parameter>
+    </transportSender>
 
     <!-- ================================================= -->
     <!--  SOAP Role Configuration                          -->
