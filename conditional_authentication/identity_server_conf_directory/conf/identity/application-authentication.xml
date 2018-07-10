@@ -122,11 +122,11 @@
                        <Parameter name="redirectToMultiOptionPageOnFailure">false</Parameter>
                 </AuthenticatorConfig>
         <AuthenticatorConfig name="EmailOTP" enabled="true">
-            <Parameter name="GmailClientId">gmailClientIdValue</Parameter>
-            <Parameter name="GmailClientSecret">gmailClientSecretValue</Parameter>
+            <Parameter name="GmailClientId">clientId.apps.googleusercontent.com</Parameter>
+            <Parameter name="GmailClientSecret">clientSecret</Parameter>
             <Parameter name="SendgridAPIKey">sendgridAPIKeyValue</Parameter>
-            <Parameter name="GmailRefreshToken">gmailRefreshTokenValue</Parameter>
-            <Parameter name="GmailEmailEndpoint">https://www.googleapis.com/gmail/v1/users/[userId]/messages/send</Parameter>
+            <Parameter name="GmailRefreshToken">1/refreshToken</Parameter>
+            <Parameter name="GmailEmailEndpoint">https://www.googleapis.com/gmail/v1/users/yenlo.wso2.demo@gmail.com/messages/send</Parameter>
             <Parameter name="SendgridEmailEndpoint">https://api.sendgrid.com/api/mail.send.json</Parameter>
             <Parameter name="accessTokenRequiredAPIs">Gmail</Parameter>
             <Parameter name="apiKeyHeaderRequiredAPIs">Sendgrid</Parameter>

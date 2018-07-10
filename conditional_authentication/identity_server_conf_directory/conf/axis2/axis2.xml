@@ -19,7 +19,7 @@
     <!-- ================================================= -->
     <!-- Globally engaged modules -->
     <!-- ================================================= -->
-    <module ref="addressing"/>
+    <!--module ref="addressing"/-->
 
     <!-- ================================================= -->
     <!-- Parameters -->
@@ -407,17 +407,17 @@
 
     <!-- To enable mail transport sender, ncomment the following and change the parameters
          accordingly-->
-    <!--<transportSender name="mailto"
+    <transportSender name="mailto"
                      class="org.apache.axis2.transport.mail.MailTransportSender">
-        <parameter name="mail.smtp.from">wso2demomail@gmail.com</parameter>
-        <parameter name="mail.smtp.user">wso2demomail</parameter>
-        <parameter name="mail.smtp.password">mailpassword</parameter>
+        <parameter name="mail.smtp.from">yenlo.wso2.demo@gmail.com</parameter>
+        <parameter name="mail.smtp.user">yenlo.wso2.demo</parameter>
+        <parameter name="mail.smtp.password">abcd#@!</parameter>
         <parameter name="mail.smtp.host">smtp.gmail.com</parameter>
 
         <parameter name="mail.smtp.port">587</parameter>
         <parameter name="mail.smtp.starttls.enable">true</parameter>
         <parameter name="mail.smtp.auth">true</parameter>
-    </transportSender>-->
+    </transportSender>
 
     <!--Please uncomment this in Multiple Instance Scenario if you want to use NIO sender -->
     <!--  
