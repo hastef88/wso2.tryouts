@@ -1094,19 +1094,4 @@
         </table>]]></body>
         <footer>---</footer>
     </configuration>
-    
-<configuration type="EmailOTP" display="idleAccountReminder" locale="en_US" emailContentType="text/html">
-   <targetEpr></targetEpr>
-   <subject>WSO2 IS Email OTP</subject>
-   <body>
-      Hi,
-      Please use this one time password {OTPCode} to sign in to your application.
-   </body>
-   <footer>
-      Best Regards,
-      WSO2 Identity Server Team
-      http://www.wso2.com
-   </footer>
-   <redirectPath></redirectPath>
-</configuration>
 </configurations>
